@@ -11,7 +11,7 @@ int main()
     std::cout << "From how many integer numbers you want to count the mean value? ";
     cin >> luku;
     if (luku <= 0) {
-        cout << "Cannot count mean value from " << luku << " numbers." << endl;
+        cout << "Cannot count mean value from " << luku << " numbers" << endl;
         return 0;
     }
 
