@@ -6,7 +6,7 @@ using namespace std;
 int main()
 {
     int luku;
-    int summa = 0;
+    double summa = 0;
     int nro = 0;
     std::cout << "From how many integer numbers you want to count the mean value? ";
     cin >> luku;
