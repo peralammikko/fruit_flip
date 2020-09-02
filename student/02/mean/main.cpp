@@ -19,7 +19,6 @@ int main()
         cout << "Input " << i << ". number: ";
         cin >> nro;
         summa = summa+nro;
-        cout << summa << endl;
         nro = 0;
     }
     cout << "Mean value of the given numbers is " << summa/luku << endl;
