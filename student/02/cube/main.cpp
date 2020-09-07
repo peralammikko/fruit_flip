@@ -16,7 +16,7 @@ int main()
         cout << "Error! The cube of " << luku << " is not " << kuutio << "." << endl;
     }
     else {
-        cout << "The cube of number " << luku << " is " << kuutio << "." << endl;
+        cout << "The cube of " << luku << " is " << kuutio << "." << endl;
 
 }
     return 0;
