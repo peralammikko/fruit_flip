@@ -7,7 +7,7 @@ int main()
 {
     int luku = 0;
     int kuutio = 0;
-    int max = pow(2,32);
+    int max = 2147483647;
     cout << "Enter a number: ";
     cin >> luku;
 
