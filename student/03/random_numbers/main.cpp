@@ -17,12 +17,11 @@ void produce_random_numbers(unsigned int lower, unsigned int upper)
             rand_gen.seed(stoi(seed_value));
     }
     uniform_int_distribution<int> distribution(lower,upper);
-    string command;
+    string command = "";
     while (true) {
         cout << endl;
-        cout << "Your drawn random number is ";
-        cout << distribution(rand_gen) << endl;
-        cout << "Press enter to continue or q to quit:";
+        cout << "Your drawn random number is " << distribution(rand_gen) << endl;
+        cout << "Press enter to continue or q to quit: ";
         getline(cin, command);
         if (command == "q") {
             break;
