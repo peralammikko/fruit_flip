@@ -22,8 +22,9 @@ void produce_random_numbers(unsigned int lower, unsigned int upper)
     while (true) {
         cout << "Your drawn random number is ";
         cout << distribution(rand_gen) << endl;
-        cout << "Press enter to continue or q to quit:" << endl;
+        cout << "Press enter to continue or q to quit:";
         getline(cin, command);
+        cout << endl;
         if (command == "q") {
             break;
         }
