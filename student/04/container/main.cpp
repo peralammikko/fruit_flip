@@ -48,7 +48,7 @@ bool is_geometric_series(vector<int> integers) {
     int koko = integers.size();
     int i = 0;
     int sum = 0;
-    for (int alkio : integers) {
+    for (int alkio = 0; alkio < koko; alkio++) {
         sum += integers.at(alkio);
     }
     if (sum == 0)
