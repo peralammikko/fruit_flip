@@ -21,7 +21,7 @@ int Account::getbalance() const
 int Account::running_number_ = 0;
 
 void Account::print() const {
-    cout << omistaja_ << " : " << iban_ << " : " << saldo_ << " euros " << endl;
+    cout << omistaja_ << " : " << iban_ << " : " << saldo_ << " euros" << endl;
 }
 
 void Account::set_credit_limit(int raja)
