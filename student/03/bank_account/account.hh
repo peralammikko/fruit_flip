@@ -24,7 +24,7 @@ public:
 
     void take_money(int otto);
 
-    void transfer_to(Account ottaja, int siirto);
+    void transfer_to(Account& ottaja, int siirto);
 
 private:
     // Generates IBAN (based on running_number_ below).

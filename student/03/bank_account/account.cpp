@@ -64,7 +64,7 @@ void Account::take_money(int otto)
     }
 }
 
-void Account::transfer_to(Account ottaja, int siirto)
+void Account::transfer_to(Account &ottaja, int siirto)
 {
     if (check_balance(siirto) == true) {
         take_money(siirto);
