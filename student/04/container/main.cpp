@@ -47,6 +47,12 @@ bool is_arithmetic_series(vector<int> integers) {
 bool is_geometric_series(vector<int> integers) {
     int koko = integers.size();
     int i = 0;
+    int sum = 0;
+    for (int alkio : integers) {
+        sum += integers.at(alkio);
+    }
+    if (sum == 0)
+        return false;
     while (i < koko-2) {
         int jako1 = integers.at(i+1) / integers.at(i);
         int jako2 = integers.at(i+2) / integers.at(i+1);
