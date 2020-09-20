@@ -48,8 +48,6 @@ bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
     int absy = abs(distancey);
     int distancex = x1-x0;
     int absx = abs(distancex);
-    int risteysx = 1;
-    int risteysy = 0;
 
     if (absy == 0) {
         while (x0 != x1) {
@@ -64,9 +62,30 @@ bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
         }
         }
     } else {
+            while (x0 != 1) {
+                if (g[y0][1] == 'o') {
+                    if (1 > x0)
+                        x0 += 1;
+                    else if (1 < x0)
+                        x0 -= 1;
+                } else if (g[y0][1] == 'R' or g[y0][1] == 'G') {
+                    cout << CANNOT_MOVE << endl;
+                    return false;
+                }
+            }
+        while (y0 != y1)  {
+            if (g[y1][1] == 'o') {
+                if (y1 > y0)
+                    y1 -= 1;
+                else if (y1 < y0)
+                    y1 += 1;
+            } else {
+                cout << CANNOT_MOVE << endl;
+                return false;
+            }
+        }
         return true;
     }
-
     return true;
 }
 
@@ -91,7 +110,9 @@ void move_piece(vector<unsigned int> siirrot, vector<vector<char>>& g) {
                     g.at(loppu[1]).at(loppu[0]) = 'R'; g.at(alku[1]).at(alku[0]) = 'o'; }; return;
         }
     }
-
+bool gameWon(vector<vector<char>>& g) {
+    return false;
+}
 
 vector<vector<char>> initBoard() {
     vector<vector<char>> lauta = {{}, {}, {}, {}, {}};
@@ -158,12 +179,16 @@ int main()
     // More code
     vector<vector<char>> grid = initBoard();
     string komento = "";
-    while (komento != "q") {
+    while (gameWon(grid) == false) {
         print(grid);
         cout << INPUT_TEXT;
         getline(cin, komento);
-        vector<unsigned int> siirrot = split(komento);
-        move_piece(siirrot, grid);
+        if (komento != "q") {
+            vector<unsigned int> siirrot = split(komento);
+            move_piece(siirrot, grid);
+        } else {
+            return EXIT_FAILURE;
+        }
     }
 
     return 0;
