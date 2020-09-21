@@ -46,8 +46,6 @@ bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
 
     int distancey = y1-y0;
     int absy = abs(distancey);
-    int distancex = x1-x0;
-    int absx = abs(distancex);
 
     if (absy == 0) {
         while (x0 != x1) {
@@ -111,7 +109,14 @@ void move_piece(vector<unsigned int> siirrot, vector<vector<char>>& g) {
         }
     }
 bool gameWon(vector<vector<char>>& g) {
-    return false;
+    for (unsigned int i = 0; i < 4; i++) {
+        if (g[0][i] == 'R' and  g[4][i] == 'G') {
+            continue;
+        } else {
+            return false;
+        }
+    }
+    return true;
 }
 
 vector<vector<char>> initBoard() {
@@ -156,9 +161,11 @@ vector<unsigned int> split(string komento) {
     char tyhja = ' ';
     while (i < pituus) {
         char merkki = komento.at(i);
-
         if (merkki != tyhja) {
             move += merkki;
+            if (move.length() > 1) {
+                break;
+            }
             unsigned int siirto = stoi_with_check(move);
             if (i==pituus-1)
                 merkit.push_back(siirto);
@@ -179,18 +186,27 @@ int main()
     // More code
     vector<vector<char>> grid = initBoard();
     string komento = "";
+    int moves = 0;
+    print(grid);
     while (gameWon(grid) == false) {
-        print(grid);
         cout << INPUT_TEXT;
         getline(cin, komento);
         if (komento != "q") {
             vector<unsigned int> siirrot = split(komento);
-            move_piece(siirrot, grid);
+            if (siirrot.size() != 4) {
+                cout << INVALID_POINT << endl;
+                continue;
+            } else {
+                move_piece(siirrot, grid);
+                moves += 1;
+            }
         } else {
-            return EXIT_FAILURE;
+            cout << moves << MOVES_MADE << endl;
+            return EXIT_SUCCESS;
         }
     }
-
-    return 0;
-
+        print(grid);
+        cout << GAME_OVER << endl;
+        cout << moves << MOVES_MADE << endl;
+        return EXIT_SUCCESS;
 }
