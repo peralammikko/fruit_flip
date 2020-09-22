@@ -215,7 +215,6 @@ int main()
             return EXIT_SUCCESS;
         }
     }
-        print(grid);
         cout << GAME_OVER << endl;
         cout << moves << MOVES_MADE << endl;
         return EXIT_SUCCESS;
