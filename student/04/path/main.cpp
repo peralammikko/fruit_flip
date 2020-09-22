@@ -60,13 +60,14 @@ bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
         }
         }
     } else {
-            while (x0 != 1) {
-                if (g[y0][1] == 'o') {
-                    if (1 > x0)
-                        x0 += 1;
-                    else if (1 < x0)
-                        x0 -= 1;
-                } else if (g[y0][1] == 'R' or g[y0][1] == 'G') {
+            int risteys = 1;
+            while (risteys != x0) {
+                if (g[y0][risteys] == 'o') {
+                    if (risteys > x0)
+                        risteys -= 1;
+                    else if (risteys < x0)
+                        risteys += 1;
+                } else if (g[y0][risteys] == 'R' or g[y0][risteys] == 'G') {
                     cout << CANNOT_MOVE << endl;
                     return false;
                 }
@@ -87,7 +88,7 @@ bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
     return true;
 }
 
-void move_piece(vector<unsigned int> siirrot, vector<vector<char>>& g) {
+void move_piece(vector<unsigned int> siirrot, vector<vector<char>>& g, int& moves) {
     vector<unsigned int> alku = {siirrot[0]-1, siirrot[1]-1};
     vector<unsigned int> loppu = {siirrot[2]-1, siirrot[3]-1};
 
@@ -103,9 +104,17 @@ void move_piece(vector<unsigned int> siirrot, vector<vector<char>>& g) {
         case ' ': cout << INVALID_POINT << endl; return;
         case 'o': cout << INVALID_POINT << endl; return;
         case 'G': if (tarkista_polku(siirrot, g) == true) {
-                    g.at(loppu[1]).at(loppu[0]) = 'G'; g.at(alku[1]).at(alku[0]) = 'o'; }; return;
+                    g.at(loppu[1]).at(loppu[0]) = 'G';
+                    g.at(alku[1]).at(alku[0]) = 'o';
+                    print(g);
+                    moves += 1;
+                    }; return;
         case 'R': if (tarkista_polku(siirrot, g) == true) {
-                    g.at(loppu[1]).at(loppu[0]) = 'R'; g.at(alku[1]).at(alku[0]) = 'o'; }; return;
+                    g.at(loppu[1]).at(loppu[0]) = 'R';
+                    g.at(alku[1]).at(alku[0]) = 'o';
+                    print(g);
+                    moves += 1;
+                    }; return;
         }
     }
 bool gameWon(vector<vector<char>>& g) {
@@ -167,6 +176,8 @@ vector<unsigned int> split(string komento) {
                 break;
             }
             unsigned int siirto = stoi_with_check(move);
+            if (siirto == 0)
+                break;
             if (i==pituus-1)
                 merkit.push_back(siirto);
         } else if (merkki == tyhja) {
@@ -197,8 +208,7 @@ int main()
                 cout << INVALID_POINT << endl;
                 continue;
             } else {
-                move_piece(siirrot, grid);
-                moves += 1;
+                move_piece(siirrot, grid, moves);
             }
         } else {
             cout << moves << MOVES_MADE << endl;
