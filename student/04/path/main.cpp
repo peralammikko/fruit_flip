@@ -4,6 +4,35 @@
 
 using namespace std;
 
+/* Polku
+ *
+ * Kuvaus:
+ * Ohjelma toteuttaa Polku-älypelin, jossa pelin tarkoituksena
+ * on siirtää pelilaudan nappulat, ylhäällä vihreät (GREEN, 'G') ja alhaalla punaiset (RED, 'R'),
+ * toisinpäin (vihreät alas & punaiset ylös). Nappulaa saa siirtää niin monta ruutua kuin
+ * haluaa, kunhan siirto on laillinen: nappuloita ei saa liikuttaa toistensa yli eikä täten
+ * ilman vapaista ruuduista (EMPTY, 'o') muodostuvaa polkua. Pelilaudan koko on COLUMS x ROWS (5x4).
+ *
+ * Pelaaminen tapahtuu antamalla ohjelmaan käskyn, joka koostuu lähtö- ja kohdepisteen
+ * x- ja y-koordinaateista (neljä numeroa). Ohjelma sitten tarkistaa onko siirto
+ * mahdollinen, jonka jälkeen pelaajalle tulostuu päivittynyt pelilauta laillisen
+ * siirron jälkeen tai viesti siirron virheellisyydestä. Pelaaminen voidaan lopettaa
+ * komennolla 'q'.
+ *
+ * Ohjelman kirjoittaja
+ * Nimi: Mikko Perälä
+ * Opiskelijanumero: 256960
+ * Käyttäjätunnus: peralam
+ * E-Mail: mikko.perala@tuni.fi
+ * Palautteen kieli (fi/en): fi
+ *
+ * Huomioita ohjelmasta ja sen toteutuksesta:
+ *
+ *
+ * */
+
+
+
 enum Slot_type {RED, GREEN, EMPTY, UNUSED};
 const unsigned int ROWS = 5;
 const unsigned int COLUMS = 4;
@@ -27,10 +56,10 @@ void print(const vector<vector<char>>& g)
         {
             switch(g.at(i).at(j))
             {
-            case 'G': cout << "G "; break;
-            case 'R': cout << "R "; break;
-            case 'o': cout << "o "; break;
-            case ' ': cout << "  "; break;
+            case GREEN: cout << "G "; break;
+            case RED: cout << "R "; break;
+            case EMPTY: cout << "o "; break;
+            case UNUSED: cout << "  "; break;
             }
         }
         cout << "|" << endl;
@@ -38,6 +67,7 @@ void print(const vector<vector<char>>& g)
     cout << "===============" << endl;
 }
 
+// Tarkistaa onko lähtö- ja kohdepisteen välillä vapaa polku
 bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
     int x1 = siirrot[2]-1;
     int y1 = siirrot[3]-1;
@@ -49,12 +79,12 @@ bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
 
     if (absy == 0) {
         while (x0 != x1) {
-        if (g[y1][x1] == 'o') {
+        if (g[y1][x1] == EMPTY) {
             if (x1 > x0)
                 x1 -= 1;
             else if (x0 > x1)
                 x1 += 1;
-        } else if (g[y0][x0] == 'R' or g[y0][x0] == 'G') {
+        } else if (g[y0][x0] == RED or g[y0][x0] == GREEN) {
             cout << CANNOT_MOVE << endl;
             return false;
         }
@@ -62,18 +92,18 @@ bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
     } else {
             int risteys = 1;
             while (risteys != x0) {
-                if (g[y0][risteys] == 'o') {
+                if (g[y0][risteys] == EMPTY) {
                     if (risteys > x0)
                         risteys -= 1;
                     else if (risteys < x0)
                         risteys += 1;
-                } else if (g[y0][risteys] == 'R' or g[y0][risteys] == 'G') {
+                } else if (g[y0][risteys] == RED or g[y0][risteys] == GREEN) {
                     cout << CANNOT_MOVE << endl;
                     return false;
                 }
             }
         while (y0 != y1)  {
-            if (g[y1][1] == 'o') {
+            if (g[y1][1] == EMPTY) {
                 if (y1 > y0)
                     y1 -= 1;
                 else if (y1 < y0)
@@ -88,38 +118,40 @@ bool tarkista_polku(vector<unsigned int> siirrot, vector<vector<char>>& g) {
     return true;
 }
 
+// Liikuttaa pelinappulaa lähtöpisteestä kohdepisteeseen (jota ennen tarkistaa pisteiden välisen polun)
 void move_piece(vector<unsigned int> siirrot, vector<vector<char>>& g, int& moves) {
     vector<unsigned int> alku = {siirrot[0]-1, siirrot[1]-1};
     vector<unsigned int> loppu = {siirrot[2]-1, siirrot[3]-1};
 
     switch(g.at(loppu[1]).at(loppu[0]))
         {
-        case ' ': cout << INVALID_POINT << endl; return;
-        case 'R': cout << INVALID_POINT << endl; return;
-        case 'G': cout << INVALID_POINT << endl; return;
+        case UNUSED: cout << INVALID_POINT << endl; return;
+        case RED: cout << INVALID_POINT << endl; return;
+        case GREEN: cout << INVALID_POINT << endl; return;
         }
 
     switch(g.at(alku[1]).at(alku[0]))
         {
-        case ' ': cout << INVALID_POINT << endl; return;
-        case 'o': cout << INVALID_POINT << endl; return;
-        case 'G': if (tarkista_polku(siirrot, g) == true) {
-                    g.at(loppu[1]).at(loppu[0]) = 'G';
-                    g.at(alku[1]).at(alku[0]) = 'o';
+        case UNUSED: cout << INVALID_POINT << endl; return;
+        case EMPTY: cout << INVALID_POINT << endl; return;
+        case GREEN: if (tarkista_polku(siirrot, g) == true) {
+                    g.at(loppu[1]).at(loppu[0]) = GREEN;
+                    g.at(alku[1]).at(alku[0]) = EMPTY;
                     print(g);
                     moves += 1;
                     }; return;
-        case 'R': if (tarkista_polku(siirrot, g) == true) {
-                    g.at(loppu[1]).at(loppu[0]) = 'R';
-                    g.at(alku[1]).at(alku[0]) = 'o';
+        case RED: if (tarkista_polku(siirrot, g) == true) {
+                    g.at(loppu[1]).at(loppu[0]) = RED;
+                    g.at(alku[1]).at(alku[0]) = EMPTY;
                     print(g);
                     moves += 1;
                     }; return;
         }
     }
+// Tarkistaa onko peli voitettu (kaikki ylärivillä punaista ja alarivillä vihreää)
 bool gameWon(vector<vector<char>>& g) {
     for (unsigned int i = 0; i < 4; i++) {
-        if (g[0][i] == 'R' and  g[4][i] == 'G') {
+        if (g[0][i] == RED and  g[4][i] == GREEN) {
             continue;
         } else {
             return false;
@@ -127,14 +159,14 @@ bool gameWon(vector<vector<char>>& g) {
     }
     return true;
 }
-
+// Alustaa pelilaudan mallin mukaisesti
 vector<vector<char>> initBoard() {
     vector<vector<char>> lauta = {{}, {}, {}, {}, {}};
-    lauta.at(0) = {'G', 'G', 'G', 'G'};
-    lauta.at(1) = {' ', 'o', ' ', ' '};
-    lauta.at(2) = {' ', 'o', 'o', ' '};
+    lauta.at(0) = {GREEN, GREEN, GREEN, GREEN};
+    lauta.at(1) = {UNUSED, EMPTY, UNUSED, UNUSED};
+    lauta.at(2) = {UNUSED, EMPTY, EMPTY, UNUSED};
     lauta.at(3) = lauta.at(1);
-    lauta.at(4) = {'R', 'R', 'R', 'R'};
+    lauta.at(4) = {RED, RED, RED, RED};
     return lauta;
 }
 
@@ -161,7 +193,8 @@ unsigned int stoi_with_check(const string& str)
         return 0;
     }
 }
-
+// Erottelee käyttäjän antamasta syötteestä lähtö- ja kohdepisteen koordinaatit (4 numeroa)
+// Jos syöte on virheellinen, keskeyttää funktion ja palaa takaisin mainin alkuun virhesanoman saattelemana
 vector<unsigned int> split(string komento) {
     vector<unsigned int> merkit = {};
     int pituus = komento.length();
@@ -190,8 +223,8 @@ vector<unsigned int> split(string komento) {
     return merkit;
 }
 
-// More functions
-
+// Alustaa ja tulostaa pelilaudan, jonka jälkeen ottaa vastaan
+// pelaajalta syötteen (siirto tai lopetus)
 int main()
 {
     // More code
