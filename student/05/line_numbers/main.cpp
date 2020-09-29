@@ -17,6 +17,7 @@ int main()
     ifstream input_olio(filename);
     if (not input_olio) {
         cout << "Error! The file " << filename <<" cannot be opened." << endl;
+        return EXIT_FAILURE;
     } else {
         ofstream output_olio(output);
         string rivi;
@@ -26,5 +27,6 @@ int main()
             i++;
         }
         input_olio.close();
+        return EXIT_SUCCESS;
     }
 }
