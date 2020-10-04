@@ -27,11 +27,11 @@ int main()
             int pituus = rivi.length();
             while (i != pituus) {
                 char merkki = rivi.at(i);
-                if (rivi.at(i) == erotin) {
+                if (merkki == erotin) {
                     lista[sana].insert(rivinro);
                     i++;
                     sana = "";
-                } else if (i != erotin) {
+                } else if (merkki != erotin) {
                     sana += merkki;
                     if (i == pituus-1) {
                         lista[sana].insert(rivinro);
