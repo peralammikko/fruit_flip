@@ -43,12 +43,14 @@ int print_count(map<string, vector<string>> v, string id, bool count_self = fals
     return sum;
 }
 
-int print_depth(map<string, vector<string>> v, string id) {
+int print_depth(map<string, vector<string>> v, string id,  int depth = 1) {
+    int max_d = depth;
     for (auto child : v.at(id)) {
-        int depth = 1 + print_depth(v, child);
-        return depth;
+        int child_depth = print_depth(v, child, depth+1);
+        if (child_depth > max_d)
+            max_d = child_depth;
     }
-    return 0;
+    return max_d;
 }
 
 void print_recursive(const map<string, vector<string>>& v, const string& id, const int depth = 0) {
