@@ -4,6 +4,7 @@
 #include <fstream>
 #include <vector>
 #include <set>
+#include <algorithm>
 
 using namespace std;
 
@@ -18,11 +19,6 @@ struct Course {
     string theme;
     string name;
     int enrollments;
-
-    bool operator<(const Course& c1) const {
-        return theme < c1.theme;
-    }
-
 
 };
 
@@ -43,15 +39,38 @@ vector<string> split (const string& r, const char erotin) {
     return osat;
 }
 
-int find_favorite(map<string, set<Course>>& d) {
-    return 0;
+bool sortByValue(const pair<string, int> course1, const pair<string, int> course2) {
+    return course1.second < course2.second;
 }
+
+bool sortAlphabetically(const Course& c1, const Course& c2) {
+    if (c1.theme == c2.theme) {
+        return c1.name < c2.name;
+    } else {
+        return c1.theme < c2.theme;
+    }
+}
+
+map<string, int> find_favorite(map<string, vector<Course>> d) {
+    map<string, int> courses = {};
+    map<string, vector<Course>>::iterator iter;
+    for (auto kurssi : d) {
+        for (auto it : kurssi.second) {
+            int tempEnrolls = 0;
+            string theme = it.theme;
+            tempEnrolls += it.enrollments;
+            courses[theme] += tempEnrolls;
+        }
+    }
+    return courses;
+}
+
 
 
 int main()
 {
 
-    map<string, set<Course>> database;
+    map<string, vector<Course>> database;
     string file = "";
     cout << "Input file: ";
     getline(cin, file);
@@ -67,38 +86,39 @@ int main()
             vector<string> parts = split(rivi, ';');
             for (auto i : parts) {
                 if (i == "" or i == " ") {
-                    cout << READ_ERROR << endl;
+                    cout << FILE_ERROR << endl;
                     return EXIT_FAILURE;
                 }
             }
             // Kurssin rakenteen tallennus mappiin
             struct Course coursetemp = {parts[1], parts[2], stoi(parts[3])};
-            if (database.find(parts[0]) != database.end()) {
-                map<string, set<Course>>::iterator it = database.find(parts[0]);
-                for (auto c : it->second) {
-                    if (coursetemp.theme == c.theme) {
-                        if (coursetemp.name == c.name) {
-                            database[parts[0]] = {coursetemp};
-                        } else {
-                            database[parts[0]].insert({coursetemp});
-                        }
-                    } else {
-                        database[parts[0]].insert({coursetemp}); }
-                }
+            map<string, vector<Course>>::iterator it = database.find(parts[0]);
+            if (it != database.end()) {
+                bool samakurssi = false;
+                for (auto& kurssi : database.at(parts[0])) {
+                    if (kurssi.name == parts[2]) {
+                        samakurssi = true;
+                     kurssi.enrollments = stoi(parts[3]);
+                    }
+                } if (samakurssi == true) {
+                    continue;
+                } database.at(parts[0]).push_back(coursetemp);
             } else {
-                database[parts[0]].insert({coursetemp});
+                database.insert({parts[0], {coursetemp}});
             }
-        }
-        for (auto kurssi : database) {
+
+        } read_file.close();
+
+        for (auto& kurssi : database) {
+            sort(kurssi.second.begin(), kurssi.second.end(), sortAlphabetically);
             cout << kurssi.first << ": " << endl;
             for (auto tieto : kurssi.second){
                 cout << tieto.theme << endl;
-                cout << tieto.name << endl;
-                cout << tieto.enrollments << endl;
-                cout << endl;
+                cout << "- " << tieto.name << endl;
+                cout << "- " << tieto.enrollments << endl;
             }
+            cout << endl;
         }
-        read_file.close();
 
     while(true) {
         vector<string> commands;
@@ -117,26 +137,39 @@ int main()
             } else if (database.find(commands[1]) == database.end()) {
                 cout << INVALIDLOCATION << endl;
             }
-        } else if (commands[0] == "favorite_theme") {
-            cout << find_favorite(database) << " enrollments" << endl;
 
         } else if (commands[0] == "courses_in_theme") {
+            set<string> courseNames = {};
             for (auto kurssi: database) {
                 for (auto it:kurssi.second) {
                     if (it.theme == commands[1]) {
-                        cout << it.name << endl;
+                        courseNames.insert(it.name);
                     }
                 }
             }
+            for (auto i : courseNames) {
+                cout << i << endl;
+            }
+
+        } else if (commands[0] == "favorite_theme") {
+            map<string, int> courseEnrolls = find_favorite(database);
+            int maxEnrolls = 0;
+            string favorite = "";
+            for (auto i : courseEnrolls) {
+                if (i.second > maxEnrolls) {
+                    maxEnrolls = i.second;
+                }
+                cout << i.first << " : " << i.second << endl;
+            }
+
 
         } else if (commands[0] == "available") {
             for (auto kurssi : database) {
                 for (auto it : kurssi.second) {
                     if (it.enrollments != 50) {
-                        cout << kurssi.first << " : ";
-                        cout << it.theme << " : ";
-                        cout << it.name << endl;
+                        cout << kurssi.first << " : " << it.theme << " : " << it.name << endl;
                     }
+
                 }
             }
 
