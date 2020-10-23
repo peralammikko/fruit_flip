@@ -20,10 +20,13 @@ struct Course {
     int enrollments;
 
     bool operator<(const Course& c1) const {
-        return c1.theme < c1.name;
+        return theme < c1.theme;
     }
+
+
 };
 
+// Tekstirivien splittausosiin (location, theme, name, enrollments), jotka palautetaan mainiin.
 vector<string> split (const string& r, const char erotin) {
     string temp = r;
     vector<string> osat;
@@ -53,6 +56,7 @@ int main()
     cout << "Input file: ";
     getline(cin, file);
 
+    // Tiedoston lukeminen ja virhetilanteiden viestit (tiedostoa ei ole / tyhjiä kenttiä)
     ifstream read_file(file);
     if (not read_file) {
         cout << READ_ERROR << endl;
@@ -70,25 +74,32 @@ int main()
             // Kurssin rakenteen tallennus mappiin
             struct Course coursetemp = {parts[1], parts[2], stoi(parts[3])};
             if (database.find(parts[0]) != database.end()) {
-                if (coursetemp.theme == parts[1]) {
-                    if (coursetemp.name == parts[2]) {
-                        database[parts[0]] = {coursetemp};
-                    }
+                map<string, set<Course>>::iterator it = database.find(parts[0]);
+                for (auto c : it->second) {
+                    if (coursetemp.theme == c.theme) {
+                        if (coursetemp.name == c.name) {
+                            database[parts[0]] = {coursetemp};
+                        } else {
+                            database[parts[0]].insert({coursetemp});
+                        }
+                    } else {
+                        database[parts[0]].insert({coursetemp}); }
                 }
+            } else {
+                database[parts[0]].insert({coursetemp});
             }
-            database[parts[0]].insert({coursetemp});
         }
         for (auto kurssi : database) {
-            cout << kurssi.first << endl;
+            cout << kurssi.first << ": " << endl;
             for (auto tieto : kurssi.second){
-                cout << tieto.name << endl;
                 cout << tieto.theme << endl;
+                cout << tieto.name << endl;
                 cout << tieto.enrollments << endl;
                 cout << endl;
             }
         }
         read_file.close();
-    }
+
     while(true) {
         vector<string> commands;
         string input;
@@ -110,10 +121,28 @@ int main()
             cout << find_favorite(database) << " enrollments" << endl;
 
         } else if (commands[0] == "courses_in_theme") {
-            cout << "tulosta teeman kurssit" << endl;
+            for (auto kurssi: database) {
+                for (auto it:kurssi.second) {
+                    if (it.theme == commands[1]) {
+                        cout << it.name << endl;
+                    }
+                }
+            }
 
         } else if (commands[0] == "available") {
-            cout << "ei-täydet kurssit" << endl;
-        }
+            for (auto kurssi : database) {
+                for (auto it : kurssi.second) {
+                    if (it.enrollments != 50) {
+                        cout << kurssi.first << " : ";
+                        cout << it.theme << " : ";
+                        cout << it.name << endl;
+                    }
+                }
+            }
+
+        } else if (commands[0] == "quit") {
+                   return EXIT_SUCCESS;
+    }
+    }
     }
 }
