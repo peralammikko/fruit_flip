@@ -119,13 +119,6 @@ int main()
 
         for (auto& kurssi : database) {
             sort(kurssi.second.begin(), kurssi.second.end(), sortAlphabetically);
-            cout << kurssi.first << ": " << endl;
-            for (auto tieto : kurssi.second){
-                cout << tieto.theme << endl;
-                cout << "- " << tieto.name << endl;
-                cout << "- " << tieto.enrollments << endl;
-            }
-            cout << endl;
         }
 
     while(true) {
