@@ -23,24 +23,32 @@ struct Course {
 };
 
 // Tekstirivien splittausosiin (location, theme, name, enrollments), jotka palautetaan mainiin.
-vector<string> split (const string& r, const char erotin) {
+vector<string> split (const string& r, const char erotin, bool includeQuotes = false) {
     string temp = r;
     vector<string> osat;
 
-    while (temp.find(erotin) != string::npos) {
+    while (temp.find(erotin) != string::npos or temp.find('"') != string::npos) {
         int erotus = temp.find(erotin);
         string new_part = temp.substr(0,erotus);
+        if (includeQuotes == true and new_part[0] == '"') {
+            erotus = temp.rfind('"');
+            new_part = temp.substr(1, erotus-1);
+        }
         temp = temp.substr(erotus+1, temp.size()-1);
         osat.push_back(new_part);
+        erotus = temp.find(erotin);
+
     }
-    if (temp == "full")
-        temp = "50";
-    osat.push_back(temp);
+    if (temp == "full") {
+        temp = "50"; }
+    if (temp != "") {
+        osat.push_back(temp);
+    }
     return osat;
 }
 
-bool sortByValue(const pair<string, int> course1, const pair<string, int> course2) {
-    return course1.second < course2.second;
+bool sortByValue(const pair<string, int>& a, const pair<string, int>& b) {
+    return a.second > b.second;
 }
 
 bool sortAlphabetically(const Course& c1, const Course& c2) {
@@ -125,7 +133,7 @@ int main()
         string input;
         cout << "> ";
         getline(cin, input);
-        commands = split(input, ' ');
+        commands = split(input, ' ', true);
 
         if (commands[0] == "locations") {
             for (auto it : database) {
@@ -136,6 +144,17 @@ int main()
                 cout <<  INVALIDPARAMETERS << commands[0] << endl;
             } else if (database.find(commands[1]) == database.end()) {
                 cout << INVALIDLOCATION << endl;
+            } else {
+                map<string, vector<Course>>::iterator iter = database.find(commands[1]);
+                    for (auto it : iter->second) {
+                        if (it.theme == commands[2]) {
+                            if (it.enrollments == 50) {
+                                cout << it.name << " --- " << "full" << endl;
+                            } else {
+                            cout << it.name << " --- " << it.enrollments << " enrollments" << endl;
+                            }
+                        }
+                    }
             }
 
         } else if (commands[0] == "courses_in_theme") {
@@ -147,19 +166,34 @@ int main()
                     }
                 }
             }
-            for (auto i : courseNames) {
-                cout << i << endl;
+            if (courseNames.size() == 0) {
+                cout << INVALIDTHEME << endl;
+            } else {
+                for (auto i : courseNames) {
+                    cout << i << endl;
+                }
             }
 
         } else if (commands[0] == "favorite_theme") {
             map<string, int> courseEnrolls = find_favorite(database);
+            vector<pair<string, int>> topCourses = {};
             int maxEnrolls = 0;
             string favorite = "";
             for (auto i : courseEnrolls) {
                 if (i.second > maxEnrolls) {
                     maxEnrolls = i.second;
                 }
-                cout << i.first << " : " << i.second << endl;
+                topCourses.push_back(i);
+            }
+            if (maxEnrolls == 0) {
+                cout << "No enrollments" << endl;
+            } else {
+                sort(topCourses.begin(),topCourses.end(),sortByValue);
+                cout << maxEnrolls << " enrollments in themes" << endl;
+                for (auto i : topCourses)
+                    if (i.second == maxEnrolls) {
+                        cout << "--- " << i.first << endl;
+                }
             }
 
 
@@ -175,7 +209,9 @@ int main()
 
         } else if (commands[0] == "quit") {
                    return EXIT_SUCCESS;
-    }
+        } else {
+            cout << UNKNOWNCOMMAND << commands[0] << endl;
+        }
     }
     }
 }
