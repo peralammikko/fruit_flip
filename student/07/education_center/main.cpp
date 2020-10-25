@@ -8,6 +8,7 @@
 
 using namespace std;
 
+// Virhesanomat, joita kutsutaan täältä myöhemmin tarvittaessa.
 string READ_ERROR = "Error: the input file cannot be opened";
 string FILE_ERROR = "Error: empty field";
 string UNKNOWNCOMMAND = "Error: Unknown command: ";
@@ -15,6 +16,7 @@ string INVALIDPARAMETERS = "Error: error in command ";
 string INVALIDLOCATION = "Error: unknown location name";
 string INVALIDTHEME = "Error: unknown theme";
 
+// Kursseissa käytettävä rakenne, jonka parametreinä toimivat kurssin teema, nimi ja osallistujamäärä.
 struct Course {
     string theme;
     string name;
@@ -28,14 +30,16 @@ struct Course {
 * Huomioi lainausmerkeissä olevat tekstit (sekä tiedostoissa että syötteissä) ja sijoittaa ne
 * palautettavaan vektoriin ilman lainausmerkkejä.
 */
-vector<string> split (const string& r, const char separator, bool includeQuotes = false) {
+vector<string> split (const string& r, const char separator, bool includeSpaces = false) {
     string temp = r;
     vector<string> parts;
 
     while (temp.find(separator) != string::npos) {
         int stop = temp.find(separator);
         string new_part = temp.substr(0,stop);
-        if (includeQuotes == true and new_part[0] == '"') {
+        // Sallii osien välillä olevat lainausmerkit, mikäli sana on lainausmerkeissä.
+        // Uusi katkaistava kohta (jälkimmäinen lainausmerkki) etsitään sanan lopusta alkaen.
+        if (includeSpaces == true and new_part[0] == '"') {
             stop = temp.rfind('"');
             new_part = temp.substr(1, stop-1);
         }
@@ -44,12 +48,15 @@ vector<string> split (const string& r, const char separator, bool includeQuotes 
         stop = temp.find(stop);
 
     }  
+    // Kurssi on täynnä mikäli sillä on 50 osallistujaa. Muutetaan numeeriseksi arvoksi
+    // laskutoimitusten helpottamiseksi.
     if (temp == "full") {
         temp = "50"; }
     if (temp != "") {
         parts.push_back(temp);
     }
 
+    // Tarkistaa, ettei syötteisiin tai tietorakenteisiin menevissä arvoissa ole lainausmerkkejä.
     for (auto& i : parts) {
         int lastLetter = i.length()-1;
         if (i.at(0) == '"' and i.at(lastLetter) == '"') {
@@ -59,13 +66,15 @@ vector<string> split (const string& r, const char separator, bool includeQuotes 
     return parts;
 }
 
-/* Järjestää vektorissa olevat parit
-*
+/* Järjestää vektorissa olevat parit arvojen mukaan laskevaan järjestykseen.
+ * Käytetään suosituimpien kurssien selvittämiseksi.
 */
 bool sortByValue(const pair<string, int>& a, const pair<string, int>& b) {
     return a.second > b.second;
 }
-
+/* Järjestää structit aakkosjärjestykseen ensisijaisesti kurssin teeman mukaan ja
+ * muussa tapauksessa kurssin nimen mukaan.
+*/
 bool sortAlphabetically(const Course& c1, const Course& c2) {
     if (c1.theme == c2.theme) {
         return c1.name < c2.name;
@@ -74,22 +83,32 @@ bool sortAlphabetically(const Course& c1, const Course& c2) {
     }
 }
 
-map<string, int> find_favorite(map<string, vector<Course>> d) {
-    map<string, int> courses = {};
-    map<string, vector<Course>>::iterator iter;
-    for (auto kurssi : d) {
-        for (auto it : kurssi.second) {
-            int tempEnrolls = 0;
+/* Järjestää ohjelman tietorakenteesta löytyvät kurssien teemat ja niitä vastaavat
+ * kokonaisosallistujamäärät pareiksi vektoriin. Tietoparit järjestetään osallistujamäärien
+ * mukaan kutsumalla vertailufunktiota ja palautetaan mainiin, josta funktiota kutsuttiin.
+*/
+vector<pair<string, int>> find_favorite(map<string, vector<Course>> d) {
+    map<string, int> courseEnrolls = {};
+    vector<pair<string, int>> topCourses = {};
+    for (auto course : d) {
+        for (auto it : course.second) {
             string theme = it.theme;
-            tempEnrolls += it.enrollments;
-            courses[theme] += tempEnrolls;
+            courseEnrolls[theme] += it.enrollments;
         }
     }
+    for (auto pair : courseEnrolls) {
+        topCourses.push_back(pair);
+    }
+    sort(topCourses.begin(),topCourses.end(),sortByValue);
 
-    return courses;
+    return topCourses;
 }
 
-
+/* Alustaa tietorakenteen (structit vektoriin ja vektorit mappiin, avaimina kurssin paikkakunta).
+ * Järjestää vektorissa olevat kurssitiedot aakkoselliseen järjestykseen kurssien teemojen ja nimien mukaisesti
+ * kutsumalla vertailufunktiota.
+ * Mikäli tiedostossa on tyhjiä kohtia tai tiedostoa ei saada avattua, tulee ikkunaan virheviesti ja ohjelma loppuu.
+*/
 
 int main()
 {
@@ -105,6 +124,7 @@ int main()
         cout << READ_ERROR << endl;
         return EXIT_FAILURE;
     } else {
+        // Tiedoston rivien lukeminen ja jaottelu osiin (katso: split-funktio)
         string rivi;
         while (getline(read_file,rivi)) {
             vector<string> parts = split(rivi, ';');
@@ -114,17 +134,19 @@ int main()
                     return EXIT_FAILURE;
                 }
             }
-            // Kurssin rakenteen tallennus mappiin
+            // Kurssin rakenteen (teema, nimi, osallistujat) tallennus mappiin (paikkakunnan arvoksi).
+            // Mikäli kurssi samalla nimellä ja teemalla löytyy jo (same course), tallettaa uusimman tiedon osallistujamäärästä.
+
             struct Course coursetemp = {parts[1], parts[2], stoi(parts[3])};
             map<string, vector<Course>>::iterator it = database.find(parts[0]);
             if (it != database.end()) {
-                bool samakurssi = false;
+                bool sameCourse = false;
                 for (auto& kurssi : database.at(parts[0])) {
                     if (kurssi.name == parts[2]) {
-                        samakurssi = true;
+                        sameCourse = true;
                      kurssi.enrollments = stoi(parts[3]);
                     }
-                } if (samakurssi == true) {
+                } if (sameCourse == true) {
                     continue;
                 } database.at(parts[0]).push_back(coursetemp);
             } else {
@@ -133,10 +155,13 @@ int main()
 
         } read_file.close();
 
-        for (auto& kurssi : database) {
-            sort(kurssi.second.begin(), kurssi.second.end(), sortAlphabetically);
+        // Järjestää tietorakenteessa olevat kurssitiedot aakkosjärjestykseen (katso: sortAlphabetically -funktio)
+        for (auto& course : database) {
+            sort(course.second.begin(), course.second.end(), sortAlphabetically);
         }
 
+        // Ottaa vastaan käyttäjän syötteitä (komentoja) ja erottelee osat split-funktion avulla,
+        // kunnes käyttäjä antaa komennon "quit".
     while(true) {
         vector<string> commands;
         string input;
@@ -144,10 +169,19 @@ int main()
         getline(cin, input);
         commands = split(input, ' ', true);
 
+        // Tulostaa kurssikeskuksessa olevien paikkakuntien nimet (mapin avaimet).
         if (commands[0] == "locations") {
             for (auto it : database) {
                 cout << it.first << endl;
             }
+
+        /* Ottaa vastaan vain 3-osaisen komennon (courses, paikkakunta, teema) ja antaa virhesanoman,
+         * mikäli paikkakuntaa ei tunnisteta, kurssia ei tunnisteta tai parametrien määrä on väärä.
+         * Etsii kurssitarjooman käyttäjän määrittelemältä paikkakunnalta ja halutusta teemasta,
+         * ja tulostaa kurssin nimen sekä osallistujamäärän. Mikäli kurssi on täynnä, funktio
+         * ilmoittaa osallistujamääräksi "full".
+         */
+
         } else if (commands[0] == "courses") {
             if (commands.size() != 3) {
                 cout <<  INVALIDPARAMETERS << commands[0] << endl;
@@ -166,11 +200,14 @@ int main()
                             }
                         }
                     }
+                    // Virhesanoma mikäli käyttäjä syöttää teeman, jota kurssikeskuksesta ei löydy.
                     if (knownCourse == false) {
                         cout << INVALIDTHEME << endl;
                     }
             }
-
+        // Ottaa vastaan 2 parametria: paikkakunta ja teema.
+        // Etsii tietorakenteesta kaikilta paikkakunnilta toivottuun teemaan sisältyvät kurssit.
+        // Antaa virhesanoman, mikäli käyttäjän antamasta teemasta ei löydy kursseja.
         } else if (commands[0] == "courses_in_theme") {
             set<string> courseNames = {};
             for (auto kurssi: database) {
@@ -187,21 +224,21 @@ int main()
                     cout << i << endl;
                 }
             }
-
+        /* Etsii kurssikeskuksesta suosituimmat kurssiteemat.
+         * Tulostaa suosituimman kurssin (tai kurssien) teeman ja kokonaisosallistujamäärän kaikilta paikkakunnilta.
+         * Mikäli kurssitarjonnan tiedosto on tyhjä tai ilmoittautumisia ei ole, tulostaa ilmoituksen "Ei ilmoittautumisia".
+        */
         } else if (commands[0] == "favorite_theme") {
-            map<string, int> courseEnrolls = find_favorite(database);
-            vector<pair<string, int>> topCourses = {};
+            vector<pair<string, int>> topCourses = find_favorite(database);
             int maxEnrolls = 0;
-            for (auto i : courseEnrolls) {
+            for (auto i : topCourses) {
                 if (i.second > maxEnrolls) {
                     maxEnrolls = i.second;
                 }
-                topCourses.push_back(i);
             }
             if (maxEnrolls == 0) {
                 cout << "No enrollments" << endl;
             } else {
-                sort(topCourses.begin(),topCourses.end(),sortByValue);
                 cout << maxEnrolls << " enrollments in themes" << endl;
                 for (auto i : topCourses)
                     if (i.second == maxEnrolls) {
@@ -209,19 +246,20 @@ int main()
                 }
             }
 
-
+        // Tulostaa kaikki kurssikeskuksen kurssit, jotka eivät ole vielä täynnä (osallistujamäärä alle 50).
         } else if (commands[0] == "available") {
-            for (auto kurssi : database) {
-                for (auto it : kurssi.second) {
+            for (auto course : database) {
+                for (auto it : course.second) {
                     if (it.enrollments != 50) {
-                        cout << kurssi.first << " : " << it.theme << " : " << it.name << endl;
+                        cout << course.first << " : " << it.theme << " : " << it.name << endl;
                     }
-
                 }
             }
-
+        // Sulkee ohjelman.
         } else if (commands[0] == "quit") {
                    return EXIT_SUCCESS;
+
+        // Antaa virheviestin tuntemattomasta komennosta.
         } else {
             cout << UNKNOWNCOMMAND << commands[0] << endl;
         }
