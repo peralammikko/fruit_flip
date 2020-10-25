@@ -10,10 +10,10 @@ using namespace std;
 
 string READ_ERROR = "Error: the input file cannot be opened";
 string FILE_ERROR = "Error: empty field";
-string UNKNOWNCOMMAND = "Error: unknown command: ";
+string UNKNOWNCOMMAND = "Error: Unknown command: ";
 string INVALIDPARAMETERS = "Error: error in command ";
 string INVALIDLOCATION = "Error: unknown location name";
-string INVALIDTHEME = "Error: Unknown theme";
+string INVALIDTHEME = "Error: unknown theme";
 
 struct Course {
     string theme;
@@ -22,31 +22,46 @@ struct Course {
 
 };
 
-// Tekstirivien splittausosiin (location, theme, name, enrollments), jotka palautetaan mainiin.
-vector<string> split (const string& r, const char erotin, bool includeQuotes = false) {
+/* Tekstirivien (location, theme, name, enrollments) ja syötekomentojen splittaaminen osiin,
+* jotka palautetaan mainiin vektorina.
+* Etsii tekstiriviltä annetun erotinmerkin ja erottelee sanat niiden väliltä.
+* Huomioi lainausmerkeissä olevat tekstit (sekä tiedostoissa että syötteissä) ja sijoittaa ne
+* palautettavaan vektoriin ilman lainausmerkkejä.
+*/
+vector<string> split (const string& r, const char separator, bool includeQuotes = false) {
     string temp = r;
-    vector<string> osat;
+    vector<string> parts;
 
-    while (temp.find(erotin) != string::npos or temp.find('"') != string::npos) {
-        int erotus = temp.find(erotin);
-        string new_part = temp.substr(0,erotus);
+    while (temp.find(separator) != string::npos) {
+        int stop = temp.find(separator);
+        string new_part = temp.substr(0,stop);
         if (includeQuotes == true and new_part[0] == '"') {
-            erotus = temp.rfind('"');
-            new_part = temp.substr(1, erotus-1);
+            stop = temp.rfind('"');
+            new_part = temp.substr(1, stop-1);
         }
-        temp = temp.substr(erotus+1, temp.size()-1);
-        osat.push_back(new_part);
-        erotus = temp.find(erotin);
+        temp = temp.substr(stop+1, temp.size()-1);
+        parts.push_back(new_part);
+        stop = temp.find(stop);
 
-    }
+    }  
     if (temp == "full") {
         temp = "50"; }
     if (temp != "") {
-        osat.push_back(temp);
+        parts.push_back(temp);
     }
-    return osat;
+
+    for (auto& i : parts) {
+        int lastLetter = i.length()-1;
+        if (i.at(0) == '"' and i.at(lastLetter) == '"') {
+            i = i.substr(1, lastLetter-1);
+        }
+    }
+    return parts;
 }
 
+/* Järjestää vektorissa olevat parit
+*
+*/
 bool sortByValue(const pair<string, int>& a, const pair<string, int>& b) {
     return a.second > b.second;
 }
@@ -70,6 +85,7 @@ map<string, int> find_favorite(map<string, vector<Course>> d) {
             courses[theme] += tempEnrolls;
         }
     }
+
     return courses;
 }
 
@@ -139,14 +155,19 @@ int main()
                 cout << INVALIDLOCATION << endl;
             } else {
                 map<string, vector<Course>>::iterator iter = database.find(commands[1]);
+                bool knownCourse = false;
                     for (auto it : iter->second) {
                         if (it.theme == commands[2]) {
+                            knownCourse = true;
                             if (it.enrollments == 50) {
                                 cout << it.name << " --- " << "full" << endl;
                             } else {
                             cout << it.name << " --- " << it.enrollments << " enrollments" << endl;
                             }
                         }
+                    }
+                    if (knownCourse == false) {
+                        cout << INVALIDTHEME << endl;
                     }
             }
 
@@ -171,7 +192,6 @@ int main()
             map<string, int> courseEnrolls = find_favorite(database);
             vector<pair<string, int>> topCourses = {};
             int maxEnrolls = 0;
-            string favorite = "";
             for (auto i : courseEnrolls) {
                 if (i.second > maxEnrolls) {
                     maxEnrolls = i.second;
