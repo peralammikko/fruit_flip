@@ -64,20 +64,20 @@ bool read_data(const std::string file_name,
     return true;
 }
 
-bool write_data(const string file_name, map<string, Student*> numerical_order) {
+bool write_data(const string file_name, map<string, Student*> alphabetical_order) {
     std::ofstream write_file;
     write_file.open(file_name, std::ios::out | std::ios::trunc);
     if (!write_file.is_open()) {
         return false;
     }
-    for (const std::pair<string, Student*> pair : numerical_order) {
+    for (const std::pair<string, Student*> pair : alphabetical_order) {
         const Student* stud = pair.second;
         write_file << stud->student_number << ";"
                    << stud->user_id << ";"
                    << stud->name << ";"
                    << stud->phone_number << ";"
                    << stud->email << ";"
-                   << stud->skype << ";"
+                   << stud->skype
                    << std::endl;
     }
     write_file.close();
@@ -165,12 +165,14 @@ int main() {
                 string new_number = "";
                 cout << "Enter a new phone number: ";
                 getline(cin, new_number);
+                cout << endl;
 
                 if (not is_valid_phone_number(new_number)) {
                     continue;
                 } else {
                     student_numbers[student_number]->phone_number = new_number;
-                    write_data(file_name, student_numbers);
+                    write_data(file_name, user_ids);
+                    cout << endl;
                 }
             }
 
