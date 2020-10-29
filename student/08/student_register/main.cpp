@@ -172,7 +172,6 @@ int main() {
                 } else {
                     student_numbers[student_number]->phone_number = new_number;
                     write_data(file_name, user_ids);
-                    cout << endl;
                 }
             }
 
