@@ -1,18 +1,16 @@
 #include "array_operations.hh"
 #include <iostream>
 
-
-
 using namespace std;
 
 int greatest_v1(int *itemptr, int size)
 {
     int greatest = 0;
-    while (itemptr < &size) {
-        if (*itemptr > greatest) {
-            greatest = *itemptr;
+    for (int i = 0; i < size; i++) {
+        int current = *(itemptr + i);
+        if (current > greatest) {
+            greatest = current;
         }
-        itemptr++;
     }
     return greatest;
 }
