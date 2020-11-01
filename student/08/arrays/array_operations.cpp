@@ -8,7 +8,7 @@ using namespace std;
 int greatest_v1(int *itemptr, int size)
 {
     int greatest = 0;
-    while (*itemptr < size) {
+    while (itemptr < &size) {
         if (*itemptr > greatest) {
             greatest = *itemptr;
         }
