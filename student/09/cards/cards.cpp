@@ -21,7 +21,7 @@ void Cards::print_from_top_to_bottom(std::ostream &s)
     int i = 1;
     Card_data* printCard = top_;
     while (printCard != nullptr) {
-        cout << i << ": " << printCard->data << endl;
+        s << i << ": " << printCard->data << endl;
         i++;
         printCard = printCard->next;
     }
@@ -36,6 +36,8 @@ bool Cards::remove(int &id)
     Card_data* temp = top_->next;
     delete top_;
     top_ = temp;
+
+    return true;
 }
 
 bool Cards::bottom_to_top()
@@ -95,7 +97,7 @@ void Cards::print_from_bottom_to_top(std::ostream &s)
     int i = 1;
 
     while (printCard != nullptr) {
-        cout << i << ": " << printCard->data << endl;
+        s << i << ": " << printCard->data << endl;
         i++;
         printCard = printCard->next;
     }
