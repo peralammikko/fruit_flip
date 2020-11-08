@@ -12,7 +12,8 @@ Queue::Queue(unsigned int cycle)
 Queue::~Queue()
 {
     Vehicle* currentCar = first_;
-    while (first_ != nullptr) {
+
+    while (currentCar != nullptr) {
         Vehicle* nextCar = currentCar->next;
         delete currentCar;
         currentCar = nextCar;
