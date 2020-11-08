@@ -7,7 +7,6 @@ Cards::Cards(): top_(nullptr) {
 
 }
 
-
 void Cards::add(int id)
 {
     Card_data* newCard = new Card_data;
@@ -91,17 +90,25 @@ bool Cards::top_to_bottom()
 
 }
 
-void Cards::print_from_bottom_to_top(std::ostream &s)
+int Cards::recursive_print(Cards::Card_data *top, ostream &s)
 {
-    Card_data* printCard = top_;
+    Card_data* currentCard = top;
+    Card_data* nextCard = top->next;
     int i = 1;
 
-    while (printCard != nullptr) {
-        s << i << ": " << printCard->data << endl;
-        i++;
-        printCard = printCard->next;
+    while (nextCard != nullptr) {
+        i = recursive_print(nextCard, s);
+        break;
     }
+    s << i << ": " << currentCard->data << endl;
+    i++;
+    return i;
+}
 
+void Cards::print_from_bottom_to_top(std::ostream &s)
+{
+    Card_data* topCard = top_;
+    recursive_print(topCard, s);
 }
 
 Cards::~Cards()
