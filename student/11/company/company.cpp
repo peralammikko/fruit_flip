@@ -34,7 +34,15 @@ void Company::addNewEmployee(const std::string &id, const std::string &dep, cons
 
 void Company::printGroup(const string &id, const string &group, const IdSet &container, ostream &output) const
 {
-    vector<string> tempVector = {};
+    int listLength = container.size();
+    if (listLength == 0) {
+        output << id << " has no " << group << "." << endl;
+    } else {
+        output << id << " has " << listLength << " " << group << "." << endl;
+        for (auto i : container) {
+                cout << i << endl;
+        }
+    }
 
 }
 
@@ -95,28 +103,20 @@ void Company::printBoss(const std::string &id, std::ostream &output) const
 void Company::printSubordinates(const std::string &id, std::ostream &output) const
 {
     Employee* idPerson = getPointer(id);
-    printNotFound(id, cout);
-    if (idPerson == nullptr) {return;}
+    if (idPerson == nullptr) {printNotFound(id, cout); return;}
     vector<Employee*> subsVector = idPerson->subordinates_;
     IdSet subSet = VectorToIdSet(subsVector);
-    int subCount = subSet.size();
-    if (subCount > 1) {
-        cout << id << " has " << subCount << " subordinates." << endl;
-        for (auto i : subSet) {
-            cout << i << endl;
-        }
-    } else {
-        cout << id << " has no subordinates." << endl;
-    }
+    string subsString = "subordinates";
+    printGroup(id, subsString, subSet, cout);
 }
 
 void Company::printColleagues(const std::string &id, std::ostream &output) const
 {
     Employee* idPerson = getPointer(id);
-    printNotFound(id, cout);
-    if (idPerson == nullptr) {return;}
+    if (idPerson == nullptr) {printNotFound(id, cout); return;}
+
     Employee* idsBoss = idPerson->boss_;
-    vector<string> colleagueList = {};
+    set<string> colleagueList = {};
     for (auto entity : companyList) {
         if (entity.second->boss_ == idsBoss) {
             if (entity.second->id_ == id) {
@@ -124,27 +124,24 @@ void Company::printColleagues(const std::string &id, std::ostream &output) const
             } else if (entity.second->boss_ == nullptr) {
                 continue;
             }
-            colleagueList.push_back(entity.second->id_);
+            colleagueList.insert(entity.second->id_);
         }
     }
-    int listLength = colleagueList.size();
-    if (listLength == 0) {
-        cout << id << " has no colleagues." << endl;
-    } else {
-        cout << id << " has " << listLength << " colleagues:" << endl;
-        for (auto name : colleagueList) {
-            cout << name << endl;
-        }
-    }
+    string empString = "colleagues";
+    printGroup(id, empString, colleagueList, cout);
 }
 
 void Company::printDepartment(const std::string &id, std::ostream &output) const
 {
+    Employee* idPerson = getPointer(id);
+    if (idPerson == nullptr) {printNotFound(id,cout); return;}
 
 }
 
 void Company::printLongestTimeInLineManagement(const std::string &id, std::ostream &output) const
 {
+    Employee* idPerson = getPointer(id);
+    if (idPerson == nullptr) {printNotFound(id,cout); return;}
 
 }
 
