@@ -22,7 +22,7 @@ void Company::addNewEmployee(const std::string &id, const std::string &dep, cons
     Employee* new_Person = new Employee;
     Employee* checkPerson = getPointer(id);
     if (checkPerson != nullptr) {
-        cout << "Error. Employee already added." << endl;
+        output << "Error. Employee already added." << endl;
     } else {
         new_Person->id_ = id;
         new_Person->department_ = dep;
@@ -142,6 +142,19 @@ void Company::printLongestTimeInLineManagement(const std::string &id, std::ostre
 {
     Employee* idPerson = getPointer(id);
     if (idPerson == nullptr) {printNotFound(id,cout); return;}
+    double maxTime = idPerson->time_in_service_;
+    string maxTimePerson = "";
+    for (auto sub : idPerson->subordinates_) {
+        if (sub->time_in_service_ > maxTime) {
+            maxTime = sub->time_in_service_;
+            maxTimePerson = sub->id_;
+        }
+    }
+    if (idPerson->time_in_service_ == maxTime) {
+        cout << "With the time of " << idPerson->time_in_service_ << ", " << id << " is the longest-served employee in their line management." << endl;
+        return;
+    }
+    cout << "With the time of " << maxTime << ", " << maxTimePerson << " is the longest-served employee in " << id << "'s line management." << endl;
 
 }
 
@@ -152,12 +165,33 @@ void Company::printShortestTimeInLineManagement(const std::string &id, std::ostr
 
 void Company::printBossesN(const std::string &id, const int n, std::ostream &output) const
 {
-
+    Employee* idPerson = getPointer(id);
+    if (idPerson == nullptr) {printNotFound(id,cout); return;}
+    set<string> setBosses = {};
+    int i = 0;
+    string bossString = "bosses";
+    while (i < n) {
+        if (idPerson->boss_ == nullptr) {break;}
+            string bossName = idPerson->boss_->id_;
+            setBosses.insert(bossName);
+            idPerson = idPerson->boss_;
+            i++;
+    }
+    printGroup(id, bossString, setBosses, cout);
 }
 
 void Company::printSubordinatesN(const std::string &id, const int n, std::ostream &output) const
 {
-
+    Employee* idPerson = getPointer(id);
+    if (idPerson == nullptr) {printNotFound(id,cout); return;}
+    set<string> setSubs = {};
+    int i = 0;
+    string subString = "subordinates";
+    while (i < n) {
+        for (auto entity : idPerson->subordinates_) {
+            setSubs.insert(entity->id_);
+        }
+    }
 }
 
 
