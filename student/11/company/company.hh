@@ -193,6 +193,8 @@ private:
     void printGroup(const std::string& id, const std::string& group,
                     const IdSet& container, std::ostream& output) const;
 
+    void listRecursive(const string &id, const int &depth, set<Employee*> &lista, int tempDepth) const;
+
 };
 
 #endif // COMPANY_HH

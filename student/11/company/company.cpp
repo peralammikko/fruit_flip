@@ -91,13 +91,12 @@ void Company::printBoss(const std::string &id, std::ostream &output) const
 {
     Employee* idPerson = getPointer(id);
     if (idPerson == nullptr) {printNotFound(id,cout); return;}
-    Employee* idBoss = idPerson->boss_;
-    if (idBoss == nullptr) {
-        cout << id << " has no bosses." << endl;
-    } else {
-        cout << id << " has 1 bosses." << endl;
-        cout << idBoss->id_ << endl;
+    Employee* idsBoss = idPerson->boss_;
+    set<string> bossId = {};
+    if (idsBoss != nullptr) {
+        bossId.insert(idsBoss->id_);
     }
+    printGroup(id,"bosses",bossId, output);
 }
 
 void Company::printSubordinates(const std::string &id, std::ostream &output) const
@@ -106,8 +105,7 @@ void Company::printSubordinates(const std::string &id, std::ostream &output) con
     if (idPerson == nullptr) {printNotFound(id, cout); return;}
     vector<Employee*> subsVector = idPerson->subordinates_;
     IdSet subSet = VectorToIdSet(subsVector);
-    string subsString = "subordinates";
-    printGroup(id, subsString, subSet, cout);
+    printGroup(id, "subordinates", subSet, output);
 }
 
 void Company::printColleagues(const std::string &id, std::ostream &output) const
@@ -127,31 +125,37 @@ void Company::printColleagues(const std::string &id, std::ostream &output) const
             colleagueList.insert(entity.second->id_);
         }
     }
-    string empString = "colleagues";
-    printGroup(id, empString, colleagueList, cout);
+    printGroup(id, "colleagues", colleagueList, output);
 }
+
+
 
 void Company::printDepartment(const std::string &id, std::ostream &output) const
 {
     Employee* idPerson = getPointer(id);
-    if (idPerson == nullptr) {printNotFound(id,cout); return;}
+    if (idPerson == nullptr) {printNotFound(id,output); return;}
+
+    // ?
 
 }
 
 void Company::printLongestTimeInLineManagement(const std::string &id, std::ostream &output) const
 {
     Employee* idPerson = getPointer(id);
-    if (idPerson == nullptr) {printNotFound(id,cout); return;}
+    if (idPerson == nullptr) {printNotFound(id,output); return;}
     double maxTime = idPerson->time_in_service_;
-    string maxTimePerson = "";
-    for (auto sub : idPerson->subordinates_) {
-        if (sub->time_in_service_ > maxTime) {
-            maxTime = sub->time_in_service_;
-            maxTimePerson = sub->id_;
+    string maxTimePerson = idPerson->id_;
+    while (idPerson->subordinates_.size() != 0) {
+        for (auto sub : idPerson->subordinates_) {
+            if (sub->time_in_service_ > maxTime) {
+                maxTime = sub->time_in_service_;
+                maxTimePerson = sub->id_;
+            }
+            idPerson = sub;
         }
     }
-    if (idPerson->time_in_service_ == maxTime) {
-        cout << "With the time of " << idPerson->time_in_service_ << ", " << id << " is the longest-served employee in their line management." << endl;
+    if (maxTimePerson == id) {
+        cout << "With the time of " << maxTime << ", " << id << " is the longest-served employee in their line management." << endl;
         return;
     }
     cout << "With the time of " << maxTime << ", " << maxTimePerson << " is the longest-served employee in " << id << "'s line management." << endl;
@@ -169,7 +173,6 @@ void Company::printBossesN(const std::string &id, const int n, std::ostream &out
     if (idPerson == nullptr) {printNotFound(id,cout); return;}
     set<string> setBosses = {};
     int i = 0;
-    string bossString = "bosses";
     while (i < n) {
         if (idPerson->boss_ == nullptr) {break;}
             string bossName = idPerson->boss_->id_;
@@ -177,21 +180,31 @@ void Company::printBossesN(const std::string &id, const int n, std::ostream &out
             idPerson = idPerson->boss_;
             i++;
     }
-    printGroup(id, bossString, setBosses, cout);
+    printGroup(id, "bosses", setBosses, output);
+}
+
+void Company::listRecursive(const string &id, const int &depth, set<Employee*> &lista, int tempDepth = 0) const
+{
+    Employee* idPerson = getPointer(id);
+    if (tempDepth < depth) {
+        for (auto sub : idPerson->subordinates_) {
+            lista.insert(sub);
+            listRecursive(sub->id_, depth, lista, tempDepth+1);
+        }
+    }
 }
 
 void Company::printSubordinatesN(const std::string &id, const int n, std::ostream &output) const
 {
     Employee* idPerson = getPointer(id);
     if (idPerson == nullptr) {printNotFound(id,cout); return;}
-    set<string> setSubs = {};
-    int i = 0;
-    string subString = "subordinates";
-    while (i < n) {
-        for (auto entity : idPerson->subordinates_) {
-            setSubs.insert(entity->id_);
-        }
+    set<Employee*> setSubs = {};
+    set<string> setIds = {};
+    listRecursive(idPerson->id_, n, setSubs);
+    for (auto i : setSubs) {
+        setIds.insert(i->id_);
     }
+    printGroup(id,"subordinates",setIds,output);
 }
 
 
