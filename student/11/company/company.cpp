@@ -9,7 +9,21 @@ Company::Company() {}
 
 Company::~Company()
 {
+    for (auto iter : companyList) {
+        delete iter.second;
+        companyList.erase(iter.first);
+    }
+}
 
+Employee *Company::getPointer(const std::string &id) const
+{
+    Employee* personPointer = nullptr;
+    for (auto person : companyList) {
+        if (person.first == id) {
+            personPointer = person.second;
+        }
+    }
+    return personPointer;
 }
 
 void Company::printNotFound(const string &id, ostream &output) const
@@ -29,7 +43,23 @@ void Company::addNewEmployee(const std::string &id, const std::string &dep, cons
         new_Person->time_in_service_ = time;
         companyList.insert({id, {new_Person}});
     }
+    delete new_Person;
+}
 
+void Company::addRelation(const std::string &subordinate, const std::string &boss, std::ostream &output)
+{
+    Employee* idPerson = getPointer(subordinate);
+    if (idPerson == nullptr) {printNotFound(subordinate,output);}
+    Employee* idsBoss = getPointer(boss);
+    int nameCount = companyList.count(subordinate);
+    if (nameCount < 1) {
+        if (boss == "") {
+            idPerson->boss_ = nullptr;
+        } else {
+            idPerson->boss_ = idsBoss;
+            idsBoss->subordinates_.push_back(idPerson);
+        }
+    }
 }
 
 void Company::printGroup(const string &id, const string &group, const IdSet &container, ostream &output) const
@@ -38,23 +68,12 @@ void Company::printGroup(const string &id, const string &group, const IdSet &con
     if (listLength == 0) {
         output << id << " has no " << group << "." << endl;
     } else {
-        output << id << " has " << listLength << " " << group << "." << endl;
+        output << id << " has " << listLength << " " << group << ":" << endl;
         for (auto i : container) {
                 cout << i << endl;
         }
     }
 
-}
-
-Employee *Company::getPointer(const std::string &id) const
-{
-    Employee* personPointer = nullptr;
-    for (auto person : companyList) {
-        if (person.first == id) {
-            personPointer = person.second;
-        }
-    }
-    return personPointer;
 }
 
 IdSet Company::VectorToIdSet(const std::vector<Employee *> &container) const
@@ -83,20 +102,6 @@ void Company::printEmployees(std::ostream &output) const
     for (auto it : companyList) {
         output << it.second->id_ << ", " << it.second->department_ << ", " << it.second->time_in_service_ << std::endl;
     }
-}
-
-void Company::addRelation(const std::string &subordinate, const std::string &boss, std::ostream &output)
-{
-    Employee* idPerson = getPointer(subordinate);
-    if (idPerson == nullptr) {printNotFound(subordinate,output);}
-    Employee* idsBoss = getPointer(boss);
-    if (boss == "") {
-        idPerson->boss_ = nullptr;
-    } else {
-        idPerson->boss_ = idsBoss;
-        idsBoss->subordinates_.push_back(idPerson);
-    }
-
 }
 
 void Company::printBoss(const std::string &id, std::ostream &output) const
