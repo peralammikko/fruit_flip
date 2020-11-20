@@ -43,22 +43,23 @@ void Company::addNewEmployee(const std::string &id, const std::string &dep, cons
         new_Person->time_in_service_ = time;
         companyList.insert({id, {new_Person}});
     }
-    delete new_Person;
 }
 
 void Company::addRelation(const std::string &subordinate, const std::string &boss, std::ostream &output)
 {
+
+    // TODO: Korjaa duplicate bugi
+
+
     Employee* idPerson = getPointer(subordinate);
-    if (idPerson == nullptr) {printNotFound(subordinate,output);}
+    if (idPerson == nullptr) {return;}
     Employee* idsBoss = getPointer(boss);
-    int nameCount = companyList.count(subordinate);
-    if (nameCount < 1) {
-        if (boss == "") {
-            idPerson->boss_ = nullptr;
-        } else {
-            idPerson->boss_ = idsBoss;
-            idsBoss->subordinates_.push_back(idPerson);
-        }
+
+    if (boss == "") {
+        idPerson->boss_ = nullptr;
+    } else {
+        idPerson->boss_ = idsBoss;
+        idsBoss->subordinates_.push_back(idPerson);
     }
 }
 
