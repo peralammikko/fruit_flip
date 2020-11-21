@@ -47,17 +47,14 @@ void Company::addNewEmployee(const std::string &id, const std::string &dep, cons
 
 void Company::addRelation(const std::string &subordinate, const std::string &boss, std::ostream &output)
 {
-
-    // TODO: Korjaa duplicate bugi
-
-
     Employee* idPerson = getPointer(subordinate);
     if (idPerson == nullptr) {return;}
-    Employee* idsBoss = getPointer(boss);
 
     if (boss == "") {
         idPerson->boss_ = nullptr;
     } else {
+        Employee* idsBoss = getPointer(boss);
+        if (idsBoss == nullptr) {return;}
         idPerson->boss_ = idsBoss;
         idsBoss->subordinates_.push_back(idPerson);
     }
