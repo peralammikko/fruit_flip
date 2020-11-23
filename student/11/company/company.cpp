@@ -318,15 +318,23 @@ void Company::findMinMaxTime(Employee* &id, bool findShortestTime = false) const
     string estTime = "longest";
     if (findShortestTime == true) {
         estTime = "shortest";
+        set<pair<string, double>> equalShortSet = {};
         double minTime = id->time_in_service_;
         string minTimePerson = id->id_;
         for (Employee* entity : lineList) {
-            if (entity->time_in_service_ < minTime) {
+            if (entity->time_in_service_ <= minTime) {
                 minTime = entity->time_in_service_;
                 minTimePerson = entity->id_;
+                if (entity->time_in_service_ == minTime) {
+                    if (entity->id_ < minTimePerson) {
+                        minTimePerson = entity->id_;
+                        minTime = entity->time_in_service_;
+                    }
+                }
             }
         }
-        result = make_pair(minTimePerson,minTime);
+        result = make_pair(minTimePerson, minTime);
+
     } else {
         double maxTime = id->time_in_service_;
         string maxTimePerson = id->id_;
