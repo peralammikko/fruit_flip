@@ -195,7 +195,7 @@ private:
 
     // Rekursiivinen apufunktio, jonka avulla voidaan listata
     //kaikki henkilön <id> alaiset halutulla syvyydellä tai ilman
-    void listRecursive(const string &id, const int &depth, set<Employee*> &lista, bool noDepthLimit, int tempDepth) const;
+    void listRecursive(const string &id, set<Employee*> &lista, bool noDepthLimit, const int &depth, int tempDepth) const;
 
     // Palvelusaikojen vertailuun käytettävä apufunktio,
     //joka palauttaa pisimpään tai lyhimpään palvelleen työntekijän tiedot

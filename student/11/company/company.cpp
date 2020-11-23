@@ -34,9 +34,6 @@ using namespace std;
  *
 */
 
-// Apufunktiossa listRecursive käytettävä parametri, jo
-const int maxN = 1;
-
 Company::Company() {}
 
 // Luokan destructor. Käy läpi jokaisen tietokannan jäsenen ja deletoi struct-rakenteen
@@ -82,7 +79,7 @@ void Company::addNewEmployee(const std::string &id, const std::string &dep, cons
     if (new_Person != nullptr) {
         output << "Error. Employee already added." << endl;
     } else {
-        new_Person = new Employee{};
+        new_Person = new Employee;
         new_Person->id_ = id;
         new_Person->department_ = dep;
         new_Person->time_in_service_ = time;
@@ -127,8 +124,8 @@ void Company::printGroup(const string &id, const string &group, const IdSet &con
         output << id << " has no " << group << "." << endl;
     } else {
         output << id << " has " << listLength << " " << group << ":" << endl;
-        for (auto i : container) {
-                cout << i << endl;
+        for (string name : container) {
+                cout << name << endl;
         }
     }
 
@@ -140,10 +137,10 @@ void Company::printGroup(const string &id, const string &group, const IdSet &con
  *
  * Parametri: container = struct-tietueita sisältävä vektori
 */
-IdSet Company::VectorToIdSet(const std::vector<Employee *> &container) const
+IdSet Company::VectorToIdSet(const std::vector<Employee*> &container) const
 {
     IdSet alphabeticalOrder = {};
-    for (auto i : container) {
+    for (Employee* i : container) {
         alphabeticalOrder.insert(i->id_);
     }
     return alphabeticalOrder;
@@ -160,21 +157,24 @@ IdSet Company::VectorToIdSet(const std::vector<Employee *> &container) const
  * aakkosjärjestykseen, ja jotka myöhemmin palautuvat viitteenä alkuperäiseen funktioon.
  * Parametrit:
  * (1) id = käyttäjän syöttämän henkilön nimi
- * (2) depth = käyttäjän toivoma hierarkiatason syvyys
- * (3) list = lista henkilön id alaisten tiedoista
- * (4) tempDepth = rekursiossa käytettävä apuparametri syvyyden saavuttamiseksi
+ * (2) list = lista henkilön id alaisten tiedoista
+ * (3) noDepthLimit = totuusarvo hierarkiatasojen rajaamiseksi.
+ * false -> työntekijöitä listataan hierarkiaketjun loppuun saakka (kunnes alaisia ei enää löydy)
+ * true -> työntekijöitä listataan hierarkiatasolle N (>1) saakka.
+ * (4) depth = käyttäjän toivoma hierarkiataso N (n=1: alainen, n=2:alaisen alainen, jne).
+ * (5) tempDepth = rekursiossa käytettävä apuparametri halutun syvyyden saavuttamiseksi
 */
 
-void Company::listRecursive(const string &id, const int &depth, set<Employee*> &list, bool noDepthLimit = false, int tempDepth = 0) const
+void Company::listRecursive(const string &id, set<Employee*> &list, bool noDepthLimit = false, const int &depth = 1, int tempDepth = 0) const
 {
     Employee* idPerson = getPointer(id);
     if (tempDepth < depth) {
-        for (auto sub : idPerson->subordinates_) {
+        for (Employee* sub : idPerson->subordinates_) {
             list.insert(sub);
             if (noDepthLimit == false) {
                 tempDepth = tempDepth+1;
             }
-            listRecursive(sub->id_, depth, list, noDepthLimit,tempDepth);
+            listRecursive(sub->id_, list, noDepthLimit, depth, tempDepth);
         }
     }
 }
@@ -238,7 +238,7 @@ void Company::printColleagues(const std::string &id, std::ostream &output) const
     Employee* idsBoss = idPerson->boss_;
     IdSet colleagueList = {};
     if (idsBoss != nullptr) {
-        for (auto entity : idsBoss->subordinates_) {
+        for (Employee* entity : idsBoss->subordinates_) {
             if (entity->id_ == id) {
                 continue;
             }
@@ -275,19 +275,19 @@ void Company::printDepartment(const std::string &id, std::ostream &output) const
             break;
         }
     }
-    listRecursive(idPerson->id_, maxN, lineList, true);
+    listRecursive(idPerson->id_, lineList, true);
 
     if (idPerson->id_ != id) {
         departNames.insert(idPerson->id_);
     }
-    for (auto i : lineList) {
-        if (i->department_ != idPerson->department_) {
+    for (Employee* entity : lineList) {
+        if (entity->department_ != idPerson->department_) {
             continue;
         }
-        if (i->id_ == id) {
+        if (entity->id_ == id) {
             continue;
         }
-        departNames.insert(i->id_);
+        departNames.insert(entity->id_);
     }
     printGroup(id, "department colleagues",departNames,output);
 }
@@ -302,12 +302,12 @@ void Company::printDepartment(const std::string &id, std::ostream &output) const
 pair<string, double> Company::findMinMaxTime(Employee* &id, bool findShortestTime = false) const {
 
     set<Employee*> lineList = {};
-    listRecursive(id->id_, maxN, lineList, true);
+    listRecursive(id->id_, lineList, true);
     pair<string, double> result = {};
     if (findShortestTime == true) {
         double minTime = id->time_in_service_;
         string minTimePerson = id->id_;
-        for (auto entity : lineList) {
+        for (Employee* entity : lineList) {
             if (entity->time_in_service_ < minTime) {
                 minTime = entity->time_in_service_;
                 minTimePerson = entity->id_;
@@ -317,7 +317,7 @@ pair<string, double> Company::findMinMaxTime(Employee* &id, bool findShortestTim
     } else {
         double maxTime = id->time_in_service_;
         string maxTimePerson = id->id_;
-        for (auto entity: lineList) {
+        for (Employee* entity: lineList) {
             if (entity->time_in_service_ > maxTime) {
                 maxTime = entity->time_in_service_;
                 maxTimePerson = entity->id_;
@@ -415,9 +415,9 @@ void Company::printSubordinatesN(const std::string &id, const int n, std::ostrea
     if (n < 1) {output << "Error. Level can't be less than 1." << endl; return;}
     set<Employee*> setSubs = {};
     IdSet subIds = {};
-    listRecursive(idPerson->id_, n, setSubs);
-    for (auto i : setSubs) {
-        subIds.insert(i->id_);
+    listRecursive(idPerson->id_, setSubs, false, n);
+    for (Employee* subordinate : setSubs) {
+        subIds.insert(subordinate->id_);
     }
     printGroup(id,"subordinates",subIds,output);
 }
