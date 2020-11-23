@@ -336,7 +336,7 @@ void Company::findMinMaxTime(Employee* &id, bool findShortestTime = false) const
         }
         for (auto i : equalShortSet) {
             if (i < minTimePerson) {
-                i = minTimePerson;
+                minTimePerson = i;
             }
         }
         result = make_pair(minTimePerson, minTime);
