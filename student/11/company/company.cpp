@@ -309,6 +309,8 @@ void Company::printDepartment(const std::string &id, std::ostream &output) const
  * työntekijöiden palvelusaikoja (alkuun vertailuarvoksi annettu <id>:n palvelusaika) riippuen siitä,
  * etsitäänkö lyhimpään vai pisimpään palvellutta työntekijää. Kyseisen henkilön nimi ja aika tallennetaan
  * tietopariin ja palautetaan alkuperäiseen funktioon tulostusta varten.
+ * Lyhintä palvelusaikaa etsittäessä yhtä pitkään palvelleista työntekijöistä tulostetaan
+ * aakkosjärjestyksessä (A-Z, a-z) ensimmäisenä olevan.
 */
 void Company::findMinMaxTime(Employee* &id, bool findShortestTime = false) const {
 
@@ -318,19 +320,23 @@ void Company::findMinMaxTime(Employee* &id, bool findShortestTime = false) const
     string estTime = "longest";
     if (findShortestTime == true) {
         estTime = "shortest";
-        set<pair<string, double>> equalShortSet = {};
+        vector<string> equalShortSet = {};
         double minTime = id->time_in_service_;
         string minTimePerson = id->id_;
         for (Employee* entity : lineList) {
             if (entity->time_in_service_ <= minTime) {
                 minTime = entity->time_in_service_;
                 minTimePerson = entity->id_;
-                if (entity->time_in_service_ == minTime) {
-                    if (entity->id_ < minTimePerson) {
-                        minTimePerson = entity->id_;
-                        minTime = entity->time_in_service_;
-                    }
-                }
+            }
+        }
+        for (auto i : lineList) {
+            if (i->time_in_service_ == minTime) {
+                equalShortSet.push_back((i->id_));
+            }
+        }
+        for (auto i : equalShortSet) {
+            if (i < minTimePerson) {
+                i = minTimePerson;
             }
         }
         result = make_pair(minTimePerson, minTime);
