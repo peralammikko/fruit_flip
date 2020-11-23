@@ -31,7 +31,14 @@ using namespace std;
  * E-Mail: mikko.perala@tuni.fi
  *
  * Huomioita ohjelmasta:
- *
+ * Rivi 89 (new_Person = new Employee;) ilmenee valgrind-testissa (QT sekä commandline) muistiongelmana:
+ * (1688 bytes in 2 blocks are definitely lost in in loss record 3 of 3).
+ * Uuden Employee-rakenteen voisi oletettavasti määrittää muodossa new Employee(id, dep, time, nullptr, {}),
+ * johon QT Creator antaakin errorin "no matching constructor for Employee".
+ * Yritimme Kooditorion assarin (Joel) kanssa korjata tätä muistiongelmaa, mutta lopulta
+ * ainut ratkaisu olisi ollut vaihtaa kaikki koodin osoittimet smart pointereihin, joka
+ * olisi ollut hieman työlästä muuten jo valmiissa ja toimivassa ohjelmassa.
+ * Toivottavasti ongelma ei osoittaudu liian merkittäväksi.
 */
 
 Company::Company() {}
@@ -79,7 +86,7 @@ void Company::addNewEmployee(const std::string &id, const std::string &dep, cons
     if (new_Person != nullptr) {
         output << "Error. Employee already added." << endl;
     } else {
-        new_Person = new Employee;
+        new_Person = new Employee();
         new_Person->id_ = id;
         new_Person->department_ = dep;
         new_Person->time_in_service_ = time;
@@ -257,7 +264,7 @@ void Company::printColleagues(const std::string &id, std::ostream &output) const
  * Funktioon palautuu lista kaikista alaisten tiedoista, joka sitten käydään
  * läpi vertaamalla listan henkilöiden osastoa alkuperäisen henkilön
  * <id> osastoon. Samalla osastolla työskentelevien nimet lisätään IdSet-säiliöön
- * departNames, ja samoin itse <id> jos henkilö ei ole osastonsa korkein esimies.
+ * departNames, ja itse <id>:n nimi vältetään (ei voi olla oma kollegansa).
  * Säiliön tiedot tulostetaan apufunktion printGroup avulla.
 */
 void Company::printDepartment(const std::string &id, std::ostream &output) const
@@ -277,6 +284,10 @@ void Company::printDepartment(const std::string &id, std::ostream &output) const
     }
     listRecursive(idPerson->id_, lineList, true);
 
+    // idPerson on nyt osaston korkein esimies, jonka kaikki suorat ja epäsuorat alaiset
+    // haettiin listRecursive-funktiolla. Lisätään kyseisen esimiehen nimi <id>:n kollegoiden listaan.
+    // Käydään palautettu lista läpi yksitellen verraten, onko listattujen työntekijöiden osasto
+    // sama kuin <id>:n oma ja hypätään itse <id>:n yli osastokollegoita lueteltaessa.
     if (idPerson->id_ != id) {
         departNames.insert(idPerson->id_);
     }
@@ -299,12 +310,14 @@ void Company::printDepartment(const std::string &id, std::ostream &output) const
  * etsitäänkö lyhimpään vai pisimpään palvellutta työntekijää. Kyseisen henkilön nimi ja aika tallennetaan
  * tietopariin ja palautetaan alkuperäiseen funktioon tulostusta varten.
 */
-pair<string, double> Company::findMinMaxTime(Employee* &id, bool findShortestTime = false) const {
+void Company::findMinMaxTime(Employee* &id, bool findShortestTime = false) const {
 
     set<Employee*> lineList = {};
     listRecursive(id->id_, lineList, true);
     pair<string, double> result = {};
+    string estTime = "longest";
     if (findShortestTime == true) {
+        estTime = "shortest";
         double minTime = id->time_in_service_;
         string minTimePerson = id->id_;
         for (Employee* entity : lineList) {
@@ -325,7 +338,11 @@ pair<string, double> Company::findMinMaxTime(Employee* &id, bool findShortestTim
         }
         result = make_pair(maxTimePerson, maxTime);
     }
-    return result;
+    if (result.first == id->id_) {
+        cout << "With the time of " << result.second << ", " << id->id_ << " is the " << estTime << "-served employee in their line management." << endl;
+        return;
+    }
+    cout << "With the time of " << result.second << ", " << result.first << " is the " << estTime << "-served employee in " << id->id_ << "'s line management." << endl;
 }
 
 
@@ -338,16 +355,7 @@ void Company::printLongestTimeInLineManagement(const std::string &id, std::ostre
 {
     Employee* idPerson = getPointer(id);
     if (idPerson == nullptr) {printNotFound(id,output); return;}
-    pair<string, double> longestPair = findMinMaxTime(idPerson, false);
-
-    string maxTimePerson = longestPair.first;
-    double maxTime = longestPair.second;
-    if (maxTimePerson == id) {
-        cout << "With the time of " << maxTime << ", " << id << " is the longest-served employee in their line management." << endl;
-        return;
-    }
-    cout << "With the time of " << maxTime << ", " << maxTimePerson << " is the longest-served employee in " << id << "'s line management." << endl;
-
+    findMinMaxTime(idPerson, false);
 }
 
 
@@ -360,15 +368,7 @@ void Company::printShortestTimeInLineManagement(const std::string &id, std::ostr
 {
     Employee* idPerson = getPointer(id);
     if (idPerson == nullptr) {printNotFound(id,output); return;}
-    pair<string, double> shortestPair = findMinMaxTime(idPerson, true);
-
-    string minTimePerson = shortestPair.first;
-    double minTime = shortestPair.second;
-    if (minTimePerson == id) {
-        cout << "With the time of " << minTime << ", " << id << " is the shortest-served employee in their line management." << endl;
-        return;
-    }
-    cout << "With the time of " << minTime << ", " << minTimePerson << " is the shortest-served employee in " << id << "'s line management." << endl;
+    findMinMaxTime(idPerson, true);
 }
 
 

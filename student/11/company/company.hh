@@ -199,7 +199,7 @@ private:
 
     // Palvelusaikojen vertailuun käytettävä apufunktio,
     //joka palauttaa pisimpään tai lyhimpään palvelleen työntekijän tiedot
-    pair<string, double> findMinMaxTime(Employee *&id, bool findShortestTime) const;
+    void findMinMaxTime(Employee *&id, bool findShortestTime) const;
 
 };
 
