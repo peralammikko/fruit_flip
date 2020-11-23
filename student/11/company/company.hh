@@ -193,7 +193,13 @@ private:
     void printGroup(const std::string& id, const std::string& group,
                     const IdSet& container, std::ostream& output) const;
 
-    void listRecursive(const string &id, const int &depth, set<Employee*> &lista, int tempDepth) const;
+    // Rekursiivinen apufunktio, jonka avulla voidaan listata
+    //kaikki henkilön <id> alaiset halutulla syvyydellä tai ilman
+    void listRecursive(const string &id, const int &depth, set<Employee*> &lista, bool noDepthLimit, int tempDepth) const;
+
+    // Palvelusaikojen vertailuun käytettävä apufunktio,
+    //joka palauttaa pisimpään tai lyhimpään palvelleen työntekijän tiedot
+    pair<string, double> findMinMaxTime(Employee *&id, bool findShortestTime) const;
 
 };
 

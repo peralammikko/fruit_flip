@@ -5,6 +5,38 @@
 
 using namespace std;
 
+/* 11.4 (P) Firma
+ * Ohjelma firman työntekijöistä ja esimies-alaissuhteista.
+ * Ohjelma lukee tekstitiedostossa olevat henkilötiedot
+ * ja luo niistä tietorakenteen, johon tallennetaan tekstiriveiltä
+ * löytyvät työntekijän nimi, osasto ja palvelusaika.
+ * Henkilötietojen jälkeen rivillä lukee vielä työntekijän lähin esimies.
+ * Työntekijä-esimiessuhde tallennetaan dynaamisesti osoittimina molempien
+ *  henkilön tietoihin, esimiehelle yhdeksi hänen alaisista ja työntekijälle esimieheksi.
+ *
+ * Käyttäjä voi tarkastella firman työntekijöiden tietoja ja esimies-alaissuhteita erilaisin komennoin.
+ * Toiminnot:
+ * Käyttäjä voi...
+ * (1) tulostaa firman työntekijöiden nimet, osastot ja palvelusajat
+ * (2) tulostaa halutun henkilön kollegoiden, alaisten tai esimiesten nimet
+ * (3) tulostaa halutun työntekijän osaston työntekijöiden nimet
+ * (4) tulostaa pisimpään ja lyhimpään palvelleen työntekijän nimen ja palvelusajan
+ *
+ * Tarkemmat komennot toimintojen suorittamiseksi löytyvät tiedostosta cli.hh.
+ *
+ * Ohjelman kirjoittaja
+ * Nimi: Mikko Perälä
+ * Opiskelijanumero: 256960
+ * Käyttäjätunnus: peralam
+ * E-Mail: mikko.perala@tuni.fi
+ *
+ * Huomioita ohjelmasta:
+ *
+*/
+
+// Apufunktiossa listRecursive käytettävä parametri, jo
+const int maxN = 1;
+
 Company::Company() {}
 
 // Luokan destructor. Käy läpi jokaisen tietokannan jäsenen ja deletoi struct-rakenteen
@@ -133,13 +165,16 @@ IdSet Company::VectorToIdSet(const std::vector<Employee *> &container) const
  * (4) tempDepth = rekursiossa käytettävä apuparametri syvyyden saavuttamiseksi
 */
 
-void Company::listRecursive(const string &id, const int &depth, set<Employee*> &list, int tempDepth = 0) const
+void Company::listRecursive(const string &id, const int &depth, set<Employee*> &list, bool noDepthLimit = false, int tempDepth = 0) const
 {
     Employee* idPerson = getPointer(id);
     if (tempDepth < depth) {
         for (auto sub : idPerson->subordinates_) {
             list.insert(sub);
-            listRecursive(sub->id_, depth, list, tempDepth+1);
+            if (noDepthLimit == false) {
+                tempDepth = tempDepth+1;
+            }
+            listRecursive(sub->id_, depth, list, noDepthLimit,tempDepth);
         }
     }
 }
@@ -240,7 +275,7 @@ void Company::printDepartment(const std::string &id, std::ostream &output) const
             break;
         }
     }
-    listRecursive(idPerson->id_,100, lineList);
+    listRecursive(idPerson->id_, maxN, lineList, true);
 
     if (idPerson->id_ != id) {
         departNames.insert(idPerson->id_);
@@ -257,28 +292,56 @@ void Company::printDepartment(const std::string &id, std::ostream &output) const
     printGroup(id, "department colleagues",departNames,output);
 }
 
+/* Pisimmän tai lyhimmän palvelusajan löytämiseen käytettävä apufunktio.
+ * Funktio ensin etsii linkitetyistä tietueista henkilön <id> kaikki alaiset listRecursive -apufunktion avulla.
+ * Apufunktio palauttaa listan kaikista suorista ja epäsuorista alaisista, ja alkaa vertailemaan
+ * työntekijöiden palvelusaikoja (alkuun vertailuarvoksi annettu <id>:n palvelusaika) riippuen siitä,
+ * etsitäänkö lyhimpään vai pisimpään palvellutta työntekijää. Kyseisen henkilön nimi ja aika tallennetaan
+ * tietopariin ja palautetaan alkuperäiseen funktioon tulostusta varten.
+*/
+pair<string, double> Company::findMinMaxTime(Employee* &id, bool findShortestTime = false) const {
+
+    set<Employee*> lineList = {};
+    listRecursive(id->id_, maxN, lineList, true);
+    pair<string, double> result = {};
+    if (findShortestTime == true) {
+        double minTime = id->time_in_service_;
+        string minTimePerson = id->id_;
+        for (auto entity : lineList) {
+            if (entity->time_in_service_ < minTime) {
+                minTime = entity->time_in_service_;
+                minTimePerson = entity->id_;
+            }
+        }
+        result = make_pair(minTimePerson,minTime);
+    } else {
+        double maxTime = id->time_in_service_;
+        string maxTimePerson = id->id_;
+        for (auto entity: lineList) {
+            if (entity->time_in_service_ > maxTime) {
+                maxTime = entity->time_in_service_;
+                maxTimePerson = entity->id_;
+            }
+        }
+        result = make_pair(maxTimePerson, maxTime);
+    }
+    return result;
+}
+
 
 /* Tulostaa henkilön <id> linjaorganisaatiosta (henkilöstä alaspäin muodostuva hierarkia)
  * pisimpään palvelleen henkilön nimen ja palvelusajan.
- * Funktio ensin etsii linkitetyistä tietueista henkilön <id> kaikki alaiset listRecursive -apufunktion avulla.
- * Apufunktio palauttaa listan kaikista suorista ja epäsuorista alaisista, ja alkaa vertailemaan
- * työntekijöiden palvelusaikoja (alkuun vertailuarvoksi annettu <id>:n palvelusaika).
+ * Henkilöiden aikojen vertailu tapahtuu apufunktiossa findMinMaxTime, josta palautuu tieto-
+ * pari pisimpään palvelleesta työntekijästä (nimi + aika).
 */
 void Company::printLongestTimeInLineManagement(const std::string &id, std::ostream &output) const
 {
     Employee* idPerson = getPointer(id);
     if (idPerson == nullptr) {printNotFound(id,output); return;}
-    set<Employee*> lineList = {};
-    listRecursive(id,100,lineList);
+    pair<string, double> longestPair = findMinMaxTime(idPerson, false);
 
-    double maxTime = idPerson->time_in_service_;
-    string maxTimePerson = idPerson->id_;
-    for (auto entity : lineList) {
-        if (entity->time_in_service_ > maxTime) {
-            maxTime = entity->time_in_service_;
-            maxTimePerson = entity->id_;
-        }
-    }
+    string maxTimePerson = longestPair.first;
+    double maxTime = longestPair.second;
     if (maxTimePerson == id) {
         cout << "With the time of " << maxTime << ", " << id << " is the longest-served employee in their line management." << endl;
         return;
@@ -290,25 +353,17 @@ void Company::printLongestTimeInLineManagement(const std::string &id, std::ostre
 
 /* Tulostaa henkilön <id> linjaorganisaatiosta (henkilöstä alaspäin muodostuva hierarkia)
  * lyhimpään palvelleen henkilön nimen ja palvelusajan.
- * Funktio ensin etsii linkitetyistä tietyeista henkilön <id> kaikki alaiset listRecursive -apufunktion avulla.
- * Apufunktio palauttaa listan kaikista suorista ja epäsuorista alaisista ja alkaa vertailemaan
- * työntekijöiden palvelusaikoja (alkuun vertailuarvona <id>:n palvelusaika).
+ * Henkilöiden aikojen vertailu tapahtuu apufunktiossa findMinMaxTime, josta palautuu tieto
+ * lyhimpään palvelleesta työntekijästä (nimi + aika).
 */
 void Company::printShortestTimeInLineManagement(const std::string &id, std::ostream &output) const
 {
     Employee* idPerson = getPointer(id);
     if (idPerson == nullptr) {printNotFound(id,output); return;}
-    set<Employee*> lineList = {};
-    listRecursive(id,100,lineList);
+    pair<string, double> shortestPair = findMinMaxTime(idPerson, true);
 
-    double minTime = idPerson->time_in_service_;
-    string minTimePerson = idPerson->id_;
-    for (auto entity : lineList) {
-        if (entity->time_in_service_ < minTime) {
-            minTime = entity->time_in_service_;
-            minTimePerson = entity->id_;
-        }
-    }
+    string minTimePerson = shortestPair.first;
+    double minTime = shortestPair.second;
     if (minTimePerson == id) {
         cout << "With the time of " << minTime << ", " << id << " is the shortest-served employee in their line management." << endl;
         return;
