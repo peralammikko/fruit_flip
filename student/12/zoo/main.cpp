@@ -25,6 +25,9 @@ int main()
     giraffe.move(1, 2, std::cout);
     giraffe.print_location(std::cout);
     giraffe.suckle(std::cout);
+    giraffe.make_noise(std::cout);
+    giraffe.move(4,5,std::cout);
+    giraffe.print_location(std::cout);
 
     std::cout << std::endl << "Cockatoo" << std::endl;
 

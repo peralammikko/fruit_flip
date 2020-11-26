@@ -250,6 +250,7 @@ DIST          = /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/spec_pre.p
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/qt_config.prf \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/linux-g++/qmake.conf \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/exclusive_builds.prf \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/toolchain.prf \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/default_pre.prf \
@@ -470,6 +471,7 @@ Makefile: zoo.pro /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/linux-g++/qmake.c
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/qt_config.prf \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/linux-g++/qmake.conf \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/spec_post.prf \
+		.qmake.stash \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/exclusive_builds.prf \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/toolchain.prf \
 		/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/default_pre.prf \
@@ -669,6 +671,7 @@ Makefile: zoo.pro /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/linux-g++/qmake.c
 /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/qt_config.prf:
 /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/linux-g++/qmake.conf:
 /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/spec_post.prf:
+.qmake.stash:
 /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/exclusive_builds.prf:
 /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/toolchain.prf:
 /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/default_pre.prf:
@@ -747,8 +750,7 @@ cockatoo.o: cockatoo.cpp cockatoo.hh \
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o cockatoo.o cockatoo.cpp
 
 giraffe.o: giraffe.cpp giraffe.hh \
-		mammal.hh \
-		animal.hh
+		mammal.hh
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o giraffe.o giraffe.cpp
 
 mammal.o: mammal.cpp mammal.hh \

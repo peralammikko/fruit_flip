@@ -1,4 +1,5 @@
 #include "mammal.hh"
+#include "animal.hh"
 
 Mammal::Mammal(): Animal("Kip kop kip kop")
 {
