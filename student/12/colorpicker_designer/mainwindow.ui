@@ -19,29 +19,15 @@
      <rect>
       <x>50</x>
       <y>80</y>
-      <width>241</width>
+      <width>211</width>
       <height>101</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="2" column="1">
-      <widget class="QSlider" name="horizontalSliderGreen">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="1">
-      <widget class="QSlider" name="horizontalSliderBlue">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QSlider" name="horizontalSliderRed">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelBlue">
+       <property name="text">
+        <string>blue:</string>
        </property>
       </widget>
      </item>
@@ -52,6 +38,13 @@
        </property>
       </widget>
      </item>
+     <item row="3" column="1">
+      <widget class="QSlider" name="horizontalSliderBlue">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
      <item row="1" column="0">
       <widget class="QLabel" name="labelRed">
        <property name="text">
@@ -59,10 +52,17 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="labelBlue">
-       <property name="text">
-        <string>blue:</string>
+     <item row="1" column="1">
+      <widget class="QSlider" name="horizontalSliderRed">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QSlider" name="horizontalSliderGreen">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
@@ -121,11 +121,11 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>262</x>
-     <y>147</y>
+     <x>232</x>
+     <y>143</y>
     </hint>
     <hint type="destinationlabel">
-     <x>221</x>
+     <x>177</x>
      <y>141</y>
     </hint>
    </hints>
@@ -137,12 +137,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>262</x>
-     <y>178</y>
+     <x>232</x>
+     <y>183</y>
     </hint>
     <hint type="destinationlabel">
-     <x>230</x>
-     <y>175</y>
+     <x>146</x>
+     <y>176</y>
     </hint>
    </hints>
   </connection>
@@ -153,12 +153,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>262</x>
-     <y>212</y>
+     <x>232</x>
+     <y>215</y>
     </hint>
     <hint type="destinationlabel">
-     <x>210</x>
-     <y>207</y>
+     <x>168</x>
+     <y>211</y>
     </hint>
    </hints>
   </connection>

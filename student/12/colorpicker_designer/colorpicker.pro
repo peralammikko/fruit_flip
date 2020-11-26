@@ -32,5 +32,3 @@ HEADERS += \
 
 FORMS += \
         mainwindow.ui
-
-CONFIG += c++14
