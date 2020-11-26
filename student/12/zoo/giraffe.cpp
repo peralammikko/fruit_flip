@@ -1,5 +1,4 @@
 #include "giraffe.hh"
-#include "mammal.hh"
 
 Giraffe::Giraffe()
 {
