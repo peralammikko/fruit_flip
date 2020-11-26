@@ -50,17 +50,3 @@ void MainWindow::onColorChanged()
     colorMap.fill(selectedColor);
     ui->colorLabel->setPixmap(colorMap);
 }
-void MainWindow::on_spinBoxRed_valueChanged(int arg1)
-{
-
-}
-
-void MainWindow::on_spinBoxGreen_valueChanged(int arg1)
-{
-
-}
-
-void MainWindow::on_spinBoxBlue_valueChanged(int arg1)
-{
-
-}
