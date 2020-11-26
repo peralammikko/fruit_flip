@@ -7,7 +7,7 @@ class Cockatoo: public Bird
 {
 public:
     Cockatoo();
-    void sing(std::ostream& output);
+    void sing(std::ostream& output) const;
 };
 
 #endif // COCKATOO_HH

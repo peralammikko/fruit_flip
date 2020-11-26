@@ -6,7 +6,7 @@ class Mammal: public Animal
 {
 public:
     Mammal();
-    void suckle(std::ostream& output);
+    void suckle(std::ostream& output) const;
 };
 
 #endif // MAMMAL_HH
