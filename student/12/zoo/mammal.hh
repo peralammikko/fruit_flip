@@ -2,6 +2,7 @@
 #define MAMMAL_HH
 #include "animal.hh"
 
+
 class Mammal: public Animal
 {
 public:
