@@ -16,7 +16,7 @@ CC            = gcc
 CXX           = g++
 DEFINES       = -DQT_DEPRECATED_WARNINGS -DQT_QML_DEBUG -DQT_WIDGETS_LIB -DQT_GUI_LIB -DQT_CORE_LIB
 CFLAGS        = -pipe -g -Wall -Wextra -D_REENTRANT -fPIC $(DEFINES)
-CXXFLAGS      = -pipe -g -Wall -Wextra -D_REENTRANT -fPIC $(DEFINES)
+CXXFLAGS      = -pipe -g -std=gnu++1y -Wall -Wextra -D_REENTRANT -fPIC $(DEFINES)
 INCPATH       = -I. -I/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/include -I/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/include/QtWidgets -I/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/include/QtGui -I/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/include/QtCore -I. -isystem /usr/include/libdrm -I. -I/opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/linux-g++
 QMAKE         = /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/bin/qmake
 DEL_FILE      = rm -f
@@ -732,7 +732,7 @@ compiler_moc_predefs_make_all: moc_predefs.h
 compiler_moc_predefs_clean:
 	-$(DEL_FILE) moc_predefs.h
 moc_predefs.h: /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/data/dummy.cpp
-	g++ -pipe -g -Wall -Wextra -dM -E -o moc_predefs.h /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/data/dummy.cpp
+	g++ -pipe -g -std=gnu++1y -Wall -Wextra -dM -E -o moc_predefs.h /opt/lintula/Qt/5.14.2/5.14.2/gcc_64/mkspecs/features/data/dummy.cpp
 
 compiler_moc_header_make_all: moc_mainwindow.cpp
 compiler_moc_header_clean:

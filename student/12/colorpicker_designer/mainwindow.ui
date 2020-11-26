@@ -19,27 +19,27 @@
      <rect>
       <x>50</x>
       <y>80</y>
-      <width>231</width>
+      <width>241</width>
       <height>101</height>
      </rect>
     </property>
     <layout class="QGridLayout" name="gridLayout">
-     <item row="3" column="0">
-      <widget class="QLabel" name="labelBlue">
-       <property name="text">
-        <string>blue:</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="labelRed">
-       <property name="text">
-        <string>red:</string>
+     <item row="2" column="1">
+      <widget class="QSlider" name="horizontalSliderGreen">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
        </property>
       </widget>
      </item>
      <item row="3" column="1">
       <widget class="QSlider" name="horizontalSliderBlue">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QSlider" name="horizontalSliderRed">
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
@@ -52,17 +52,17 @@
        </property>
       </widget>
      </item>
-     <item row="1" column="1">
-      <widget class="QSlider" name="horizontalSliderRed">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+     <item row="1" column="0">
+      <widget class="QLabel" name="labelRed">
+       <property name="text">
+        <string>red:</string>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QSlider" name="horizontalSliderGreen">
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+     <item row="3" column="0">
+      <widget class="QLabel" name="labelBlue">
+       <property name="text">
+        <string>blue:</string>
        </property>
       </widget>
      </item>
@@ -121,12 +121,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>252</x>
-     <y>141</y>
+     <x>262</x>
+     <y>147</y>
     </hint>
     <hint type="destinationlabel">
-     <x>220</x>
-     <y>139</y>
+     <x>221</x>
+     <y>141</y>
     </hint>
    </hints>
   </connection>
@@ -137,12 +137,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>246</x>
-     <y>176</y>
+     <x>262</x>
+     <y>178</y>
     </hint>
     <hint type="destinationlabel">
-     <x>214</x>
-     <y>172</y>
+     <x>230</x>
+     <y>175</y>
     </hint>
    </hints>
   </connection>
@@ -153,12 +153,12 @@
    <slot>setValue(int)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>244</x>
-     <y>213</y>
+     <x>262</x>
+     <y>212</y>
     </hint>
     <hint type="destinationlabel">
-     <x>198</x>
-     <y>208</y>
+     <x>210</x>
+     <y>207</y>
     </hint>
    </hints>
   </connection>
