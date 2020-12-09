@@ -1,0 +1,303 @@
+#include "mainwindow.hh"
+#include "ui_mainwindow.h"
+
+#include <QKeyEvent>
+#include <QDebug>
+#include <QPixmap>
+#include <vector>
+
+using namespace std;
+
+
+MainWindow::MainWindow(QWidget *parent)
+    : QMainWindow(parent),
+    ui(new Ui::MainWindow)
+{
+    ui->setupUi(this);
+
+    // We need a graphics scene in which to draw rectangles
+    scene_ = new QGraphicsScene(this);
+
+    // The width of the graphicsView is BORDER_RIGHT added by 2,
+    // since the borders take one pixel on each side
+    // (1 on the left, and 1 on the right).
+    // Similarly, the height of the graphicsView is BORDER_DOWN added by 2.
+    ui->graphicsView->setGeometry(LEFT_MARGIN, TOP_MARGIN,
+                                  BORDER_RIGHT + 2, BORDER_DOWN + 2);
+    ui->graphicsView->setScene(scene_);
+
+    // The width of the scene_ is BORDER_RIGHT decreased by 1 and
+    // the height of it is BORDER_DOWN decreased by 1, because
+    // each square of a fruit is considered to be inside the sceneRect,
+    // if its upper left corner is inside the sceneRect.
+    scene_->setSceneRect(0, 0, BORDER_RIGHT - 1, BORDER_DOWN - 1);
+
+    int seed = time(0); // You can change seed value for testing purposes
+    randomEng_.seed(seed);
+    distr_ = std::uniform_int_distribution<int>(0, NUMBER_OF_FRUITS - 1);
+    int rand = distr_(randomEng_); // Wiping out the first random number (which is almost always 0)
+
+    init_grids(rand);
+
+    init_titles();
+
+
+    // More code perhaps needed
+}
+
+MainWindow::~MainWindow()
+{
+    delete ui;
+}
+
+void MainWindow::init_titles()
+{
+    // Displaying column titles, starting from A
+    for(int i = 0, letter = 'A'; i < COLUMNS; ++i, ++letter)
+    {
+        int shift = 5;
+        QString letter_string = "";
+        letter_string.append(letter);
+        QLabel* label = new QLabel(letter_string, this);
+        label->setGeometry(LEFT_MARGIN + shift + i * SQUARE_SIDE,
+                           TOP_MARGIN - SQUARE_SIDE,
+                           SQUARE_SIDE, SQUARE_SIDE);
+    }
+
+    // Displaying row titles, starting from A
+    for(int i = 0, letter = 'A'; i < ROWS; ++i, ++letter)
+    {
+        QString letter_string = "";
+        letter_string.append(letter);
+        QLabel* label = new QLabel(letter_string, this);
+        label->setGeometry(LEFT_MARGIN - SQUARE_SIDE,
+                           TOP_MARGIN + i * SQUARE_SIDE,
+                           SQUARE_SIDE, SQUARE_SIDE);
+    }
+
+}
+
+void MainWindow::draw_fruit()
+{
+    // Vector of fruits
+    const std::vector<std::string>
+            fruits = {"cherries", "strawberry", "orange", "pear", "apple",
+                      "bananas", "tomato", "grapes", "eggplant"};
+
+    // Defining where the images can be found and what kind of images they are
+    const std::string PREFIX(":/");
+    const std::string SUFFIX(".png");
+
+    // Converting image (png) to a pixmap
+    int i = 0; // try different values in 0 <= i < fruits.size()
+    std::string filename = PREFIX + fruits.at(i) + SUFFIX;
+    QPixmap image(QString::fromStdString(filename));
+
+    // Scaling the pixmap
+    image = image.scaled(SQUARE_SIDE, SQUARE_SIDE);
+
+    // Setting the pixmap for a new label
+    QLabel* label = new QLabel("test", this);
+    label->setGeometry(LEFT_MARGIN + COLUMNS * SQUARE_SIDE,
+                       TOP_MARGIN + ROWS * SQUARE_SIDE,
+                       SQUARE_SIDE, SQUARE_SIDE);
+    label->setPixmap(image);
+}
+
+void MainWindow::init_grids(int rndm)
+{
+    std::vector<QGraphicsRectItem*> tempvector = {};
+    vector<unsigned int> tempvec = {};
+    for (int i = 0; i < ROWS; i++) {
+        for (int j = 0; j < COLUMNS; j++) {
+            tempvector.push_back(rect_);
+            rndm = distr_(randomEng_);
+            tempvec.push_back(rndm);
+
+            QPen blackPen(Qt::black);
+            QBrush colorBrush = paint_block(rndm);
+            rect_ = scene_->addRect(i*SQUARE_SIDE,j*SQUARE_SIDE,SQUARE_SIDE,SQUARE_SIDE, blackPen, colorBrush);
+        }
+        grid_.push_back(tempvector);
+        tempvector.clear();
+
+        numbergrid_.push_back(tempvec);
+        tempvec.clear();
+    }
+    if (check_matches() == true) {
+        grid_.clear();
+        numbergrid_.clear();
+        init_grids(rndm);
+    }
+}
+
+void MainWindow::swap_blocks()
+{
+    string alphabet = "abcdefghijklmnopqrstuvwxyz";
+    QGraphicsRectItem* startlaatta = new QGraphicsRectItem;
+    QGraphicsRectItem* endlaatta = new QGraphicsRectItem;
+    string start = on_startPoint_editingFinished();
+    string end = on_endPoint_editingFinished();
+    if (start.size() > 2 || end.size() > 2) {
+        return;
+    }
+    int startX = alphabet.find(start.at(0)); int startY = alphabet.find(start.at(1));
+    int endX = alphabet.find(end.at(0)); int endY = alphabet.find(end.at(1));
+    if (startX > COLUMNS-1 || startY > ROWS-1) {
+        return;
+    } else if (endX > COLUMNS-1 || endY > ROWS-1) {
+        return;
+    }
+
+    int distance = abs(startX-endX + startY-endY);
+    if (distance != 1) {
+        return;
+    }
+
+    int temp = 0;
+    temp = numbergrid_.at(startX).at(startY);
+    numbergrid_.at(startX).at(startY) = numbergrid_.at(endX).at(endY);
+    numbergrid_.at(endX).at(endY) = temp;
+
+
+    startlaatta = grid_.at(startX).at(startY);
+    endlaatta = grid_.at(endX).at(endY);
+    QGraphicsRectItem* templaatta = new QGraphicsRectItem;
+    templaatta = startlaatta;
+    startlaatta = endlaatta;
+    endlaatta = templaatta;
+
+}
+
+bool MainWindow::check_matches()
+{
+    // Pystysuuntaiset matchit
+    int currentnum = 0;
+    int nextnum = 0;
+    int nextnextnum = 0;
+    vector<int> matchvec = {};
+    bool matchFound = false;
+
+    for (int col = 0; col < COLUMNS; col++) {
+        for (int row = 0; row < ROWS-2; row++) {
+                currentnum = numbergrid_.at(col).at(row);
+                if (currentnum == -1) {
+                    continue;
+                }
+                nextnum = numbergrid_.at(col).at(row+1);
+                nextnextnum = numbergrid_.at(col).at(row+2);
+                if (currentnum == nextnum && currentnum == nextnextnum) {
+                    matchFound = true;
+                    numbergrid_.at(col).at(row) = -1;
+                    numbergrid_.at(col).at(row+1) = -1;
+                    numbergrid_.at(col).at(row+2) = -1;
+                    qDebug() << "it's a match!";
+                    update_screen();
+                }
+        }
+    }
+    // Vaakasuuntaiset matchit
+    for (int col = 0; col < COLUMNS-2; col++) {
+        for (int row = 0; row < ROWS; row++) {
+            currentnum = numbergrid_.at(col).at(row);
+            if (currentnum == -1) {
+                continue;
+            }
+            nextnum = numbergrid_.at(col+1).at(row);
+            nextnextnum = numbergrid_.at(col+2).at(row);
+            if (currentnum == nextnum && currentnum == nextnextnum) {
+                matchFound = true;
+                numbergrid_.at(col).at(row) = -1;
+                numbergrid_.at(col+1).at(row) = -1;
+                numbergrid_.at(col+2).at(row) = -1;
+                qDebug() << "it's a matchy match!";
+                update_screen();
+            }
+        }
+    }
+    if (matchFound) {
+        int DELAY = 1000;
+        QTimer::singleShot(DELAY, this, SLOT(drop_blocks()));
+        return true;
+    }
+    return false;
+}
+
+void MainWindow::drop_blocks()
+{
+    while (true) {
+        bool emptybelow = false;
+        for (int col = 0; col < COLUMNS; col++) {
+            for (int row = ROWS-2; row > 0; row--) {
+                int currentnumber = numbergrid_.at(col).at(row);
+                int numberabove = numbergrid_.at(col).at(row-1);
+                int numberbelow = numbergrid_.at(col).at(row+1);
+                if (numberbelow == -1 && currentnumber != -1) {
+                    emptybelow = true;
+                    numbergrid_.at(col).at(row+1) = currentnumber;
+                    numbergrid_.at(col).at(row) = numberabove;
+                    numbergrid_.at(col).at(row-1) = -1;
+                }
+            }
+        }
+        update_screen();
+        if (emptybelow == false) {
+            check_matches();
+            break;
+        }
+    }
+    return;
+}
+
+void MainWindow::update_screen()
+{
+    for (int i = 0; i < COLUMNS; i++) {
+        for (int j = 0; j < ROWS; j++) {
+            int colornumber = numbergrid_.at(i).at(j);
+            QPen blackPen(Qt::black);
+            QColor backGroundColor(225, 225, 225);
+            if (colornumber == -1) {
+                rect_ = scene_->addRect(i*SQUARE_SIDE, j*SQUARE_SIDE, SQUARE_SIDE, SQUARE_SIDE, blackPen, backGroundColor);
+            } else {
+                QBrush colorBrush = paint_block(colornumber);
+                rect_ = scene_->addRect(i*SQUARE_SIDE,j*SQUARE_SIDE,SQUARE_SIDE,SQUARE_SIDE, blackPen, colorBrush);
+            }
+        }
+    }
+}
+
+QBrush MainWindow::paint_block(int numbr)
+{
+    QBrush brush(Qt::black);
+    switch(numbr) {
+    case 0: brush.setColor(Qt::magenta); break;
+    case 1: brush.setColor(Qt::red); break;
+    case 2: brush.setColor(Qt::green); break;
+    case 3: brush.setColor(Qt::yellow); break;
+    case 4: brush.setColor(Qt::blue); break;
+    case 5: brush.setColor(Qt::darkRed); break;
+    }
+    return brush;
+}
+
+string MainWindow::on_startPoint_editingFinished()
+{
+    string startPoint = ui->startPoint->text().toStdString();
+    return startPoint;
+}
+
+string MainWindow::on_endPoint_editingFinished()
+{
+    string endPoint = ui->endPoint->text().toStdString();
+    return endPoint;
+}
+
+void MainWindow::on_moveButton_clicked()
+{
+    swap_blocks();
+    update_screen();
+    check_matches();
+    int DELAY = 1000;
+    QTimer::singleShot(DELAY, this, SLOT(drop_blocks()));
+    return;
+}
