@@ -34,7 +34,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     int seed = time(0); // You can change seed value for testing purposes
     randomEng_.seed(seed);
-    distr_ = std::uniform_int_distribution<int>(0, NUMBER_OF_FRUITS - 1);
+    distr_ = std::uniform_int_distribution<int>(0, NUMBER_OF_FRUITS - 2);
     int rand = distr_(randomEng_); // Wiping out the first random number (which is almost always 0)
 
     init_grids(rand);
@@ -107,12 +107,13 @@ void MainWindow::draw_fruit()
 void MainWindow::init_grids(int rndm)
 {
     std::vector<QGraphicsRectItem*> tempvector = {};
-    vector<unsigned int> tempvec = {};
+    vector<Fruit_kind> tempvec = {};
     for (int i = 0; i < ROWS; i++) {
         for (int j = 0; j < COLUMNS; j++) {
             tempvector.push_back(rect_);
             rndm = distr_(randomEng_);
-            tempvec.push_back(rndm);
+            Fruit_kind fruit = static_cast<Fruit_kind>(rndm);
+            tempvec.push_back(fruit);
 
             QPen blackPen(Qt::black);
             QBrush colorBrush = paint_block(rndm);
@@ -154,7 +155,7 @@ void MainWindow::swap_blocks()
         return;
     }
 
-    int temp = 0;
+    Fruit_kind temp;
     temp = numbergrid_.at(startX).at(startY);
     numbergrid_.at(startX).at(startY) = numbergrid_.at(endX).at(endY);
     numbergrid_.at(endX).at(endY) = temp;
@@ -172,51 +173,73 @@ void MainWindow::swap_blocks()
 bool MainWindow::check_matches()
 {
     // Pystysuuntaiset matchit
-    int currentnum = 0;
-    int nextnum = 0;
-    int nextnextnum = 0;
-    vector<int> matchvec = {};
+    Fruit_kind currentnum = EMPTY;
+    Fruit_kind nextnum = EMPTY;
+    Fruit_kind nextnextnum = EMPTY;
     bool matchFound = false;
 
     for (int col = 0; col < COLUMNS; col++) {
+        int counter = 1;
         for (int row = 0; row < ROWS-2; row++) {
-                currentnum = numbergrid_.at(col).at(row);
-                if (currentnum == -1) {
-                    continue;
+            currentnum = numbergrid_.at(col).at(row);
+            if (currentnum == EMPTY) {
+                continue;
+            }
+            for (int nextrow = row+1; nextrow <= ROWS-1; nextrow++) {
+                Fruit_kind nextfruit = numbergrid_.at(col).at(nextrow);
+                if (nextfruit == currentnum) {
+                    counter++;
+                    if (nextrow == ROWS-1 && counter > 2) {
+                        matchFound = true;
+                        for (int j = 0; j < counter; j++) {
+                            numbergrid_.at(col).at(row+j) = EMPTY;
+                        }
+                    }
+                } else {
+                    if (counter > 2) {
+                        matchFound = true;
+                        for (int j = 0; j < counter; j++) {
+                            numbergrid_.at(col).at(row+j) = EMPTY;
+                        }
+                    }
+                    counter = 1;
+                    break;
                 }
-                nextnum = numbergrid_.at(col).at(row+1);
-                nextnextnum = numbergrid_.at(col).at(row+2);
-                if (currentnum == nextnum && currentnum == nextnextnum) {
-                    matchFound = true;
-                    numbergrid_.at(col).at(row) = -1;
-                    numbergrid_.at(col).at(row+1) = -1;
-                    numbergrid_.at(col).at(row+2) = -1;
-                    qDebug() << "it's a match!";
-                    update_screen();
-                }
+            }
+            /*
+            nextnum = numbergrid_.at(col).at(row+1);
+            nextnextnum = numbergrid_.at(col).at(row+2);
+            if (currentnum == nextnum && currentnum == nextnextnum) {
+                matchFound = true;
+                numbergrid_.at(col).at(row) = EMPTY;
+                numbergrid_.at(col).at(row+1) = EMPTY;
+                numbergrid_.at(col).at(row+2) = EMPTY;
+                qDebug() << "it's a match!";
+
+            }
+            */
         }
     }
     // Vaakasuuntaiset matchit
     for (int col = 0; col < COLUMNS-2; col++) {
         for (int row = 0; row < ROWS; row++) {
             currentnum = numbergrid_.at(col).at(row);
-            if (currentnum == -1) {
+            if (currentnum == EMPTY) {
                 continue;
             }
             nextnum = numbergrid_.at(col+1).at(row);
             nextnextnum = numbergrid_.at(col+2).at(row);
             if (currentnum == nextnum && currentnum == nextnextnum) {
                 matchFound = true;
-                numbergrid_.at(col).at(row) = -1;
-                numbergrid_.at(col+1).at(row) = -1;
-                numbergrid_.at(col+2).at(row) = -1;
-                qDebug() << "it's a matchy match!";
-                update_screen();
+                numbergrid_.at(col).at(row) = EMPTY;
+                numbergrid_.at(col+1).at(row) = EMPTY;
+                numbergrid_.at(col+2).at(row) = EMPTY;
+                qDebug() << "it's a match! (vaaka)";
             }
         }
     }
     if (matchFound) {
-        int DELAY = 1000;
+        update_screen();
         QTimer::singleShot(DELAY, this, SLOT(drop_blocks()));
         return true;
     }
@@ -225,18 +248,25 @@ bool MainWindow::check_matches()
 
 void MainWindow::drop_blocks()
 {
+    // Pudottaa hedelmiä niin kauas kunnes ruutujen alta ei löydy enää tyhjiä
     while (true) {
+        Fruit_kind currentFruit = EMPTY;
+        Fruit_kind aboveFruit = EMPTY;
+        Fruit_kind belowFruit = EMPTY;
         bool emptybelow = false;
         for (int col = 0; col < COLUMNS; col++) {
-            for (int row = ROWS-2; row > 0; row--) {
-                int currentnumber = numbergrid_.at(col).at(row);
-                int numberabove = numbergrid_.at(col).at(row-1);
-                int numberbelow = numbergrid_.at(col).at(row+1);
-                if (numberbelow == -1 && currentnumber != -1) {
+            for (int row = 1; row < ROWS-1; row++) {
+                currentFruit = numbergrid_.at(col).at(row);
+                belowFruit = numbergrid_.at(col).at(row+1);
+                aboveFruit = numbergrid_.at(col).at(row-1);
+                if (belowFruit == EMPTY && currentFruit != EMPTY) {
                     emptybelow = true;
-                    numbergrid_.at(col).at(row+1) = currentnumber;
-                    numbergrid_.at(col).at(row) = numberabove;
-                    numbergrid_.at(col).at(row-1) = -1;
+                    numbergrid_.at(col).at(row+1) = currentFruit;
+                    numbergrid_.at(col).at(row) = aboveFruit;
+                    numbergrid_.at(col).at(row-1) = EMPTY;
+                }
+                if (row == 0) {
+
                 }
             }
         }
@@ -253,10 +283,10 @@ void MainWindow::update_screen()
 {
     for (int i = 0; i < COLUMNS; i++) {
         for (int j = 0; j < ROWS; j++) {
-            int colornumber = numbergrid_.at(i).at(j);
+            Fruit_kind colornumber = numbergrid_.at(i).at(j);
             QPen blackPen(Qt::black);
             QColor backGroundColor(225, 225, 225);
-            if (colornumber == -1) {
+            if (colornumber == EMPTY) {
                 rect_ = scene_->addRect(i*SQUARE_SIDE, j*SQUARE_SIDE, SQUARE_SIDE, SQUARE_SIDE, blackPen, backGroundColor);
             } else {
                 QBrush colorBrush = paint_block(colornumber);
@@ -270,12 +300,13 @@ QBrush MainWindow::paint_block(int numbr)
 {
     QBrush brush(Qt::black);
     switch(numbr) {
-    case 0: brush.setColor(Qt::magenta); break;
-    case 1: brush.setColor(Qt::red); break;
-    case 2: brush.setColor(Qt::green); break;
-    case 3: brush.setColor(Qt::yellow); break;
-    case 4: brush.setColor(Qt::blue); break;
-    case 5: brush.setColor(Qt::darkRed); break;
+    case PLUM: brush.setColor(Qt::magenta); break;
+    case STRAWBERRY: brush.setColor(Qt::red); break;
+    case APPLE: brush.setColor(Qt::green); break;
+    case LEMON: brush.setColor(Qt::yellow); break;
+    case BLUEBERRY: brush.setColor(Qt::blue); break;
+    case ORANGE: brush.setColor(Qt::darkRed); break;
+    case EMPTY: brush.setColor(QColor (225,225,225)); break;
     }
     return brush;
 }

@@ -40,10 +40,6 @@ private:
     QGraphicsScene* scene_;
     QGraphicsRectItem* rect_;
 
-
-    std::vector<std::vector<unsigned int>> numbergrid_;
-    std::vector<std::vector<QGraphicsRectItem*>> grid_;
-
     // Margins for the drawing area (the graphicsView object)
     // You can change the values as you wish
     const int TOP_MARGIN = 150;
@@ -72,11 +68,15 @@ private:
                      LEMON,
                      BLUEBERRY,
                      ORANGE,
+                     EMPTY,
                      NUMBER_OF_FRUITS};
 
     // For randomly selecting fruits for the grid
     std::default_random_engine randomEng_;
     std::uniform_int_distribution<int> distr_;
+
+    std::vector<std::vector<Fruit_kind>> numbergrid_;
+    std::vector<std::vector<QGraphicsRectItem*>> grid_;
 
     // Writes the titles for the grid rows and columns
     void init_titles();
@@ -95,5 +95,7 @@ private:
     void update_screen();
 
     QBrush paint_block(int rndm);
+
+    const int DELAY = 1000;
 };
 #endif // MAINWINDOW_HH
