@@ -135,8 +135,6 @@ void MainWindow::init_grids(int rndm)
 void MainWindow::swap_blocks()
 {
     string alphabet = "abcdefghijklmnopqrstuvwxyz";
-    QGraphicsRectItem* startlaatta = new QGraphicsRectItem;
-    QGraphicsRectItem* endlaatta = new QGraphicsRectItem;
     string start = on_startPoint_editingFinished();
     string end = on_endPoint_editingFinished();
     if (start.size() > 2 || end.size() > 2) {
@@ -160,22 +158,12 @@ void MainWindow::swap_blocks()
     numbergrid_.at(startX).at(startY) = numbergrid_.at(endX).at(endY);
     numbergrid_.at(endX).at(endY) = temp;
 
-
-    startlaatta = grid_.at(startX).at(startY);
-    endlaatta = grid_.at(endX).at(endY);
-    QGraphicsRectItem* templaatta = new QGraphicsRectItem;
-    templaatta = startlaatta;
-    startlaatta = endlaatta;
-    endlaatta = templaatta;
-
 }
 
 bool MainWindow::check_matches()
 {
     // Pystysuuntaiset matchit
     Fruit_kind currentnum = EMPTY;
-    Fruit_kind nextnum = EMPTY;
-    Fruit_kind nextnextnum = EMPTY;
     bool matchFound = false;
 
     for (int col = 0; col < COLUMNS; col++) {
@@ -189,12 +177,6 @@ bool MainWindow::check_matches()
                 Fruit_kind nextfruit = numbergrid_.at(col).at(nextrow);
                 if (nextfruit == currentnum) {
                     counter++;
-                    if (nextrow == ROWS-1 && counter > 2) {
-                        matchFound = true;
-                        for (int j = 0; j < counter; j++) {
-                            numbergrid_.at(col).at(row+j) = EMPTY;
-                        }
-                    }
                 } else {
                     if (counter > 2) {
                         matchFound = true;
@@ -205,36 +187,48 @@ bool MainWindow::check_matches()
                     counter = 1;
                     break;
                 }
-            }
-            /*
-            nextnum = numbergrid_.at(col).at(row+1);
-            nextnextnum = numbergrid_.at(col).at(row+2);
-            if (currentnum == nextnum && currentnum == nextnextnum) {
-                matchFound = true;
-                numbergrid_.at(col).at(row) = EMPTY;
-                numbergrid_.at(col).at(row+1) = EMPTY;
-                numbergrid_.at(col).at(row+2) = EMPTY;
-                qDebug() << "it's a match!";
+                if (nextrow == ROWS-1) {
+                    if (counter > 2) {
+                        matchFound = true;
+                        for (int j = 0; j < counter; j++) {
+                            numbergrid_.at(col).at(row+j) = EMPTY;
+                        }
+                    }
+                }
 
             }
-            */
         }
     }
     // Vaakasuuntaiset matchit
     for (int col = 0; col < COLUMNS-2; col++) {
+        int counter = 1;
         for (int row = 0; row < ROWS; row++) {
             currentnum = numbergrid_.at(col).at(row);
             if (currentnum == EMPTY) {
                 continue;
             }
-            nextnum = numbergrid_.at(col+1).at(row);
-            nextnextnum = numbergrid_.at(col+2).at(row);
-            if (currentnum == nextnum && currentnum == nextnextnum) {
-                matchFound = true;
-                numbergrid_.at(col).at(row) = EMPTY;
-                numbergrid_.at(col+1).at(row) = EMPTY;
-                numbergrid_.at(col+2).at(row) = EMPTY;
-                qDebug() << "it's a match! (vaaka)";
+              for (int nextcol = col+1; nextcol <= COLUMNS-1; nextcol++) {
+                Fruit_kind nextfruit = numbergrid_.at(nextcol).at(row);
+                if (nextfruit == currentnum) {
+                    counter++;
+                } else {
+                    if (counter > 2) {
+                        matchFound = true;
+                        for (int j = 0; j < counter; j++) {
+                            numbergrid_.at(col+j).at(row) = EMPTY;
+                        }
+                    }
+                    counter = 1;
+                    break;
+                }
+                if (nextcol == COLUMNS-1) {
+                    if (counter > 2) {
+                        matchFound = true;
+                        for (int j = 0; j < counter; j++) {
+                            numbergrid_.at(col+j).at(row) = EMPTY;
+                        }
+                    }
+                }
             }
         }
     }
@@ -251,22 +245,16 @@ void MainWindow::drop_blocks()
     // Pudottaa hedelmiä niin kauas kunnes ruutujen alta ei löydy enää tyhjiä
     while (true) {
         Fruit_kind currentFruit = EMPTY;
-        Fruit_kind aboveFruit = EMPTY;
         Fruit_kind belowFruit = EMPTY;
         bool emptybelow = false;
         for (int col = 0; col < COLUMNS; col++) {
-            for (int row = 1; row < ROWS-1; row++) {
+            for (int row = 0; row < ROWS-1; row++) {
                 currentFruit = numbergrid_.at(col).at(row);
                 belowFruit = numbergrid_.at(col).at(row+1);
-                aboveFruit = numbergrid_.at(col).at(row-1);
                 if (belowFruit == EMPTY && currentFruit != EMPTY) {
                     emptybelow = true;
                     numbergrid_.at(col).at(row+1) = currentFruit;
-                    numbergrid_.at(col).at(row) = aboveFruit;
-                    numbergrid_.at(col).at(row-1) = EMPTY;
-                }
-                if (row == 0) {
-
+                    numbergrid_.at(col).at(row) = EMPTY;
                 }
             }
         }
@@ -305,7 +293,7 @@ QBrush MainWindow::paint_block(int numbr)
     case APPLE: brush.setColor(Qt::green); break;
     case LEMON: brush.setColor(Qt::yellow); break;
     case BLUEBERRY: brush.setColor(Qt::blue); break;
-    case ORANGE: brush.setColor(Qt::darkRed); break;
+    case ORANGE: brush.setColor(QColor (255,155,51)); break;
     case EMPTY: brush.setColor(QColor (225,225,225)); break;
     }
     return brush;
@@ -328,7 +316,5 @@ void MainWindow::on_moveButton_clicked()
     swap_blocks();
     update_screen();
     check_matches();
-    int DELAY = 1000;
-    QTimer::singleShot(DELAY, this, SLOT(drop_blocks()));
     return;
 }
