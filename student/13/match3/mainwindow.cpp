@@ -45,6 +45,12 @@ MainWindow::MainWindow(QWidget *parent)
 
     init_titles();
 
+    init_score();
+
+    init_timer();
+
+    connect(timer_, &QTimer::timeout, this, &MainWindow::update_timer);
+
     // More code perhaps needed
 }
 
@@ -140,7 +146,7 @@ void MainWindow::swap_blocks()
     string alphabet = "abcdefghijklmnopqrstuvwxyz";
     string start = on_startPoint_editingFinished();
     string end = on_endPoint_editingFinished();
-    if (start.size() > 2 || end.size() > 2) {
+    if (start.size() > 2 || end.size() > 2 || start == "" || end == "") {
         return;
     }
     int startX = alphabet.find(start.at(0)); int startY = alphabet.find(start.at(1));
@@ -185,6 +191,7 @@ bool MainWindow::check_matches()
                         matchFound = true;
                         for (int j = 0; j < counter; j++) {
                             numbergrid_.at(col).at(row+j) = EMPTY;
+                            points_ += 1;
                         }
                     }
                     counter = 1;
@@ -195,6 +202,7 @@ bool MainWindow::check_matches()
                         matchFound = true;
                         for (int j = 0; j < counter; j++) {
                             numbergrid_.at(col).at(row+j) = EMPTY;
+                            points_ += 1;
                         }
                         counter = 1;
                     }
@@ -221,6 +229,7 @@ bool MainWindow::check_matches()
                         matchFound = true;
                         for (int j = 0; j < counter; j++) {
                             numbergrid_.at(col+j).at(row) = EMPTY;
+                            points_ += 1;
                         }
                     }
                     counter = 1;
@@ -231,6 +240,7 @@ bool MainWindow::check_matches()
                         matchFound = true;
                         for (int j = 0; j < counter; j++) {
                             numbergrid_.at(col+j).at(row) = EMPTY;
+                            points_ += 1;
                         }
                         counter = 1;
                     }
@@ -240,6 +250,7 @@ bool MainWindow::check_matches()
     }
 
     if (matchFound) {
+        ui->lcdNumberScore->display(points_);
         update_screen();
         QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
         return true;
@@ -328,6 +339,56 @@ void MainWindow::checkSettings()
     on_delayCheck_stateChanged(ui->delayCheck->checkState());
 }
 
+void MainWindow::init_score()
+{
+    palette_.setColor(QPalette::Background, Qt::black);
+    ui->lcdNumberScore->setPalette(palette_);
+    ui->lcdNumberScore->setAutoFillBackground(true);
+    points_ = 0;
+    ui->lcdNumberScore->display(0);
+}
+
+void MainWindow::init_timer()
+{
+    timer_ = new QTimer;
+    timer_->setInterval(1000);
+    palette_.setColor(QPalette::Background, Qt::black);
+    ui->lcdNumberMins->setPalette(palette_);
+    ui->lcdNumberMins->setAutoFillBackground(true);
+
+    ui->lcdNumberSecs->setPalette(palette_);
+    ui->lcdNumberSecs->setAutoFillBackground(true);
+
+
+}
+
+void MainWindow::lock_buttons(bool lockup)
+{
+    if (lockup == true) {
+        ui->startPoint->setDisabled(true);
+        ui->endPoint->setDisabled(true);
+        ui->moveButton->setDisabled(true);
+    } else {
+        ui->startPoint->setDisabled(false);
+        ui->endPoint->setDisabled(false);
+        ui->moveButton->setDisabled(false);
+    }
+}
+
+void MainWindow::update_timer()
+{
+    int mins = ui->lcdNumberMins->intValue();
+    int secs = ui->lcdNumberSecs->intValue();
+
+    if (secs == 59) {
+        ui->lcdNumberMins->display(mins+1);
+        ui->lcdNumberSecs->display(0);
+    } else {
+        ui->lcdNumberMins->display(mins);
+        ui->lcdNumberSecs->display(secs+1);
+    }
+}
+
 string MainWindow::on_startPoint_editingFinished()
 {
     string startPoint = ui->startPoint->text().toStdString();
@@ -342,11 +403,14 @@ string MainWindow::on_endPoint_editingFinished()
 
 void MainWindow::on_moveButton_clicked()
 {
+    if (points_ == 0) {
+        timer_->start();
+    }
     swap_blocks();
     update_screen();
     check_matches();
     QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
-
+    ui->resetButton->setText("End game");
     return;
 }
 
@@ -361,11 +425,24 @@ int MainWindow::on_delayCheck_stateChanged(int arg1)
 
 void MainWindow::on_resetButton_clicked()
 {
+    if (points_ > 0) {
+        QString score = QString::number(points_);
+        timer_->stop();
+        lock_buttons(true);
+        msg_.setText("Final score: ");
+        msg_.setInformativeText(score);
+        msg_.setStandardButtons(QMessageBox::Ok);
+        points_ = 0;
+        ui->resetButton->setText("Play again?");
+        return;
+    }
+    ui->resetButton->setText("Reset game");
+    lock_buttons(false);
     grid_.clear();
     numbergrid_.clear();
     init_grids();
+    init_score();
 }
-
 
 void MainWindow::on_gridSettingsButton_clicked()
 {

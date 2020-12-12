@@ -24,7 +24,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>Reset game (R)</string>
+     <string>Reset game</string>
     </property>
    </widget>
    <widget class="QGroupBox" name="groupBox">
@@ -64,6 +64,19 @@
        </widget>
       </item>
      </layout>
+    </widget>
+    <widget class="QCheckBox" name="checkBox">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>130</y>
+       <width>191</width>
+       <height>26</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Battle Royale Mode</string>
+     </property>
     </widget>
    </widget>
    <widget class="QGroupBox" name="groupBox_2">
@@ -105,7 +118,7 @@
        <widget class="QLineEdit" name="gridSizeXLine"/>
       </item>
       <item>
-       <widget class="QLabel" name="label_4">
+       <widget class="QLabel" name="x">
         <property name="text">
          <string>x</string>
         </property>
@@ -116,6 +129,55 @@
       </item>
      </layout>
     </widget>
+   </widget>
+   <widget class="Line" name="line">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>80</y>
+      <width>861</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="orientation">
+     <enum>Qt::Horizontal</enum>
+    </property>
+   </widget>
+   <widget class="QLCDNumber" name="lcdNumberScore">
+    <property name="geometry">
+     <rect>
+      <x>40</x>
+      <y>40</y>
+      <width>71</width>
+      <height>31</height>
+     </rect>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_3">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>10</y>
+      <width>121</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Blocks destroyed:</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_2">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>10</y>
+      <width>63</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Time:</string>
+    </property>
    </widget>
    <widget class="QWidget" name="">
     <property name="geometry">
@@ -128,7 +190,7 @@
     </property>
     <layout class="QFormLayout" name="formLayout">
      <item row="0" column="0">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="startLabel">
        <property name="text">
         <string>Start</string>
        </property>
@@ -138,7 +200,7 @@
       <widget class="QLineEdit" name="startPoint"/>
      </item>
      <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
+      <widget class="QLabel" name="endLabel">
        <property name="text">
         <string>End</string>
        </property>
@@ -165,6 +227,31 @@
       <height>131</height>
      </rect>
     </property>
+   </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>250</x>
+      <y>40</y>
+      <width>146</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <item>
+      <widget class="QLCDNumber" name="lcdNumberMins"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLCDNumber" name="lcdNumberSecs"/>
+     </item>
+    </layout>
    </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">

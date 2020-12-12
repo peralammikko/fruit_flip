@@ -9,6 +9,7 @@
 #include <random>
 #include <QTimer>
 #include <QLabel>
+#include <QMessageBox>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -109,13 +110,29 @@ private:
 
     QBrush paint_block(int rndm);
 
+    QPalette palette_;
+
+    QTimer* timer_;
+
+    QMessageBox msg_;
+
     void checkSettings();
+
+    void init_score();
+
+    void init_timer();
+
+    void lock_buttons(bool lockup);
 
     int delay_ = 1000;
 
     int rand_;
 
     bool refill_ = false;
+
+    int points_ = 0;
+
+    void update_timer();
 
 };
 #endif // MAINWINDOW_HH
