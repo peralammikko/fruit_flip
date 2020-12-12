@@ -35,12 +35,15 @@ MainWindow::MainWindow(QWidget *parent)
     int seed = time(0); // You can change seed value for testing purposes
     randomEng_.seed(seed);
     distr_ = std::uniform_int_distribution<int>(0, NUMBER_OF_FRUITS - 2);
-    int rand = distr_(randomEng_); // Wiping out the first random number (which is almost always 0)
+    distr_(randomEng_); // Wiping out the first random number (which is almost always 0)
 
-    init_grids(rand);
+    ui->delayCheck->setChecked(true);
+
+    checkSettings();
+
+    init_grids();
 
     init_titles();
-
 
     // More code perhaps needed
 }
@@ -53,7 +56,7 @@ MainWindow::~MainWindow()
 void MainWindow::init_titles()
 {
     // Displaying column titles, starting from A
-    for(int i = 0, letter = 'A'; i < COLUMNS; ++i, ++letter)
+    for(int i = 0, letter = 'A'; i < GRID_ROW_SIZE_+1; ++i, ++letter)
     {
         int shift = 5;
         QString letter_string = "";
@@ -65,7 +68,7 @@ void MainWindow::init_titles()
     }
 
     // Displaying row titles, starting from A
-    for(int i = 0, letter = 'A'; i < ROWS; ++i, ++letter)
+    for(int i = 0, letter = 'A'; i < GRID_ROW_SIZE_+1; ++i, ++letter)
     {
         QString letter_string = "";
         letter_string.append(letter);
@@ -104,14 +107,16 @@ void MainWindow::draw_fruit()
     label->setPixmap(image);
 }
 
-void MainWindow::init_grids(int rndm)
+void MainWindow::init_grids()
 {
+    grid_.clear();
+    numbergrid_.clear();
     std::vector<QGraphicsRectItem*> tempvector = {};
     vector<Fruit_kind> tempvec = {};
-    for (int i = 0; i < ROWS; i++) {
-        for (int j = 0; j < COLUMNS; j++) {
+    for (int i = 0; i < GRID_COL_SIZE_+1; i++) {
+        for (int j = 0; j < GRID_ROW_SIZE_+1; j++) {
             tempvector.push_back(rect_);
-            rndm = distr_(randomEng_);
+            int rndm = distr_(randomEng_);
             Fruit_kind fruit = static_cast<Fruit_kind>(rndm);
             tempvec.push_back(fruit);
 
@@ -126,9 +131,7 @@ void MainWindow::init_grids(int rndm)
         tempvec.clear();
     }
     if (check_matches() == true) {
-        grid_.clear();
-        numbergrid_.clear();
-        init_grids(rndm);
+        init_grids();
     }
 }
 
@@ -142,9 +145,9 @@ void MainWindow::swap_blocks()
     }
     int startX = alphabet.find(start.at(0)); int startY = alphabet.find(start.at(1));
     int endX = alphabet.find(end.at(0)); int endY = alphabet.find(end.at(1));
-    if (startX > COLUMNS-1 || startY > ROWS-1) {
+    if (startX > GRID_COL_SIZE_ || startY > GRID_ROW_SIZE_) {
         return;
-    } else if (endX > COLUMNS-1 || endY > ROWS-1) {
+    } else if (endX > GRID_COL_SIZE_ || endY > GRID_ROW_SIZE_) {
         return;
     }
 
@@ -166,14 +169,14 @@ bool MainWindow::check_matches()
     Fruit_kind currentnum = EMPTY;
     bool matchFound = false;
 
-    for (int col = 0; col < COLUMNS; col++) {
+    for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
         int counter = 1;
-        for (int row = 0; row < ROWS-2; row++) {
+        for (int row = 0; row < GRID_ROW_SIZE_-1; row++) {
             currentnum = numbergrid_.at(col).at(row);
             if (currentnum == EMPTY) {
                 continue;
             }
-            for (int nextrow = row+1; nextrow <= ROWS-1; nextrow++) {
+            for (int nextrow = row+1; nextrow < GRID_ROW_SIZE_+1; nextrow++) {
                 Fruit_kind nextfruit = numbergrid_.at(col).at(nextrow);
                 if (nextfruit == currentnum) {
                     counter++;
@@ -187,27 +190,29 @@ bool MainWindow::check_matches()
                     counter = 1;
                     break;
                 }
-                if (nextrow == ROWS-1) {
+                if (nextrow == GRID_ROW_SIZE_) {
                     if (counter > 2) {
                         matchFound = true;
                         for (int j = 0; j < counter; j++) {
                             numbergrid_.at(col).at(row+j) = EMPTY;
                         }
+                        counter = 1;
                     }
                 }
 
             }
         }
     }
+
     // Vaakasuuntaiset matchit
-    for (int col = 0; col < COLUMNS-2; col++) {
+    for (int col = 0; col < GRID_COL_SIZE_-1; col++) {
         int counter = 1;
-        for (int row = 0; row < ROWS; row++) {
+        for (int row = 0; row < GRID_ROW_SIZE_+1; row++) {
             currentnum = numbergrid_.at(col).at(row);
             if (currentnum == EMPTY) {
                 continue;
             }
-              for (int nextcol = col+1; nextcol <= COLUMNS-1; nextcol++) {
+              for (int nextcol = col+1; nextcol < GRID_COL_SIZE_+1; nextcol++) {
                 Fruit_kind nextfruit = numbergrid_.at(nextcol).at(row);
                 if (nextfruit == currentnum) {
                     counter++;
@@ -221,24 +226,27 @@ bool MainWindow::check_matches()
                     counter = 1;
                     break;
                 }
-                if (nextcol == COLUMNS-1) {
+                if (nextcol == GRID_COL_SIZE_) {
                     if (counter > 2) {
                         matchFound = true;
                         for (int j = 0; j < counter; j++) {
                             numbergrid_.at(col+j).at(row) = EMPTY;
                         }
+                        counter = 1;
                     }
                 }
             }
         }
     }
+
     if (matchFound) {
         update_screen();
-        QTimer::singleShot(DELAY, this, SLOT(drop_blocks()));
+        QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
         return true;
     }
     return false;
 }
+
 
 void MainWindow::drop_blocks()
 {
@@ -248,7 +256,7 @@ void MainWindow::drop_blocks()
         Fruit_kind belowFruit = EMPTY;
         bool emptybelow = false;
         for (int col = 0; col < COLUMNS; col++) {
-            for (int row = 0; row < ROWS-1; row++) {
+            for (int row = GRID_COL_SIZE_-1; row >= 0; row--) {
                 currentFruit = numbergrid_.at(col).at(row);
                 belowFruit = numbergrid_.at(col).at(row+1);
                 if (belowFruit == EMPTY && currentFruit != EMPTY) {
@@ -260,6 +268,9 @@ void MainWindow::drop_blocks()
         }
         update_screen();
         if (emptybelow == false) {
+            if (refill_ == true) {
+                refill_blocks();
+            }
             check_matches();
             break;
         }
@@ -269,8 +280,8 @@ void MainWindow::drop_blocks()
 
 void MainWindow::update_screen()
 {
-    for (int i = 0; i < COLUMNS; i++) {
-        for (int j = 0; j < ROWS; j++) {
+    for (int i = 0; i < GRID_COL_SIZE_+1; i++) {
+        for (int j = 0; j < GRID_ROW_SIZE_+1; j++) {
             Fruit_kind colornumber = numbergrid_.at(i).at(j);
             QPen blackPen(Qt::black);
             QColor backGroundColor(225, 225, 225);
@@ -282,6 +293,19 @@ void MainWindow::update_screen()
             }
         }
     }
+}
+
+void MainWindow::refill_blocks()
+{
+    for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
+        if (numbergrid_.at(col).at(0) != EMPTY) {
+            continue;
+        }
+        Fruit_kind newfruit = static_cast<Fruit_kind>(distr_(randomEng_));
+        numbergrid_.at(col).at(0) = newfruit;
+    }
+    update_screen();
+    QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
 }
 
 QBrush MainWindow::paint_block(int numbr)
@@ -297,6 +321,11 @@ QBrush MainWindow::paint_block(int numbr)
     case EMPTY: brush.setColor(QColor (225,225,225)); break;
     }
     return brush;
+}
+
+void MainWindow::checkSettings()
+{
+    on_delayCheck_stateChanged(ui->delayCheck->checkState());
 }
 
 string MainWindow::on_startPoint_editingFinished()
@@ -316,5 +345,54 @@ void MainWindow::on_moveButton_clicked()
     swap_blocks();
     update_screen();
     check_matches();
+    QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
+
     return;
+}
+
+int MainWindow::on_delayCheck_stateChanged(int arg1)
+{
+    if (arg1 == false) {
+        return delay_ = 0;
+    }
+    return delay_ = 1000;
+
+}
+
+void MainWindow::on_resetButton_clicked()
+{
+    grid_.clear();
+    numbergrid_.clear();
+    init_grids();
+}
+
+
+void MainWindow::on_gridSettingsButton_clicked()
+{
+    QString gridX = ui->gridSizeXLine->text();
+    QString gridY = ui->gridSizeYLine->text();
+    if (gridX != "" || gridY != "") {
+        qint32 gridXint = gridX.toInt();
+        qint32 gridYint = gridY.toInt();
+        if (gridXint > 2 || gridYint > 2) {
+            GRID_COL_SIZE_ = gridXint-1;
+            GRID_ROW_SIZE_ = gridYint-1;
+            init_grids();
+            init_titles();
+            return;
+        }
+    }
+    GRID_COL_SIZE_ = COLUMNS-1;
+    GRID_ROW_SIZE_ = ROWS-1;
+    init_grids();
+    init_titles();
+}
+
+void MainWindow::on_refillCheck_stateChanged()
+{
+    if (ui->refillCheck->isChecked()) {
+        refill_ = true;
+        return;
+    }
+    refill_ = false;
 }

@@ -32,6 +32,14 @@ private slots:
 
     void drop_blocks();
 
+    int on_delayCheck_stateChanged(int arg1);
+
+    void on_resetButton_clicked();
+
+    void on_gridSettingsButton_clicked();
+
+    void on_refillCheck_stateChanged();
+
 private:
 
     Ui::MainWindow *ui;
@@ -46,17 +54,20 @@ private:
     const int LEFT_MARGIN = 100;
 
     // Size of a square containing a fruit
-    const int SQUARE_SIDE = 80;
+    const int SQUARE_SIDE = 60;
     // Number of vertical cells (places for fruits)
     const int ROWS = 6; // give your own value here
     // Number of horizontal cells (places for fruits)
     const int COLUMNS = 6; // give your own value here
 
+    int GRID_ROW_SIZE_ = ROWS-1;
+    int GRID_COL_SIZE_ = COLUMNS-1;
+
     // Constants describing scene coordinates
     const int BORDER_UP = 0;
-    const int BORDER_DOWN = SQUARE_SIDE * ROWS;
+    const int BORDER_DOWN = SQUARE_SIDE * (GRID_ROW_SIZE_+1);
     const int BORDER_LEFT = 0;
-    const int BORDER_RIGHT = SQUARE_SIDE * COLUMNS;
+    const int BORDER_RIGHT = SQUARE_SIDE * (GRID_COL_SIZE_+1);
 
     // Constants for different fruits and the number of them
     // Add/remove fruits as you wish, or you can remove the whole enum type
@@ -86,7 +97,7 @@ private:
     // but try to do so, if you want to use real fruits instead of rectangles.
     void draw_fruit();
 
-    void init_grids(int rndm);
+    void init_grids();
 
     void swap_blocks();
 
@@ -94,8 +105,17 @@ private:
 
     void update_screen();
 
+    void refill_blocks();
+
     QBrush paint_block(int rndm);
 
-    const int DELAY = 1000;
+    void checkSettings();
+
+    int delay_ = 1000;
+
+    int rand_;
+
+    bool refill_ = false;
+
 };
 #endif // MAINWINDOW_HH

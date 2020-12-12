@@ -6,81 +6,164 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>896</width>
-    <height>600</height>
+    <width>902</width>
+    <height>628</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
+   <widget class="QPushButton" name="resetButton">
+    <property name="geometry">
+     <rect>
+      <x>210</x>
+      <y>540</y>
+      <width>151</width>
+      <height>28</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Reset game (R)</string>
+    </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>220</y>
+      <width>291</width>
+      <height>171</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>267</width>
+       <height>94</height>
+      </rect>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="0" column="0" colspan="2">
+       <widget class="QCheckBox" name="delayCheck">
+        <property name="text">
+         <string>Add delay to falling blocks</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QCheckBox" name="refillCheck">
+        <property name="text">
+         <string>Infinite mode: refill missing blocks</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_2">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>400</y>
+      <width>291</width>
+      <height>143</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Grid size</string>
+    </property>
+    <widget class="QPushButton" name="gridSettingsButton">
+     <property name="geometry">
+      <rect>
+       <x>60</x>
+       <y>90</y>
+       <width>168</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Apply changes and reset</string>
+     </property>
+    </widget>
+    <widget class="QWidget" name="">
+     <property name="geometry">
+      <rect>
+       <x>60</x>
+       <y>40</y>
+       <width>161</width>
+       <height>30</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout">
+      <item>
+       <widget class="QLineEdit" name="gridSizeXLine"/>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>x</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLineEdit" name="gridSizeYLine"/>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+   <widget class="QWidget" name="">
+    <property name="geometry">
+     <rect>
+      <x>630</x>
+      <y>110</y>
+      <width>167</width>
+      <height>98</height>
+     </rect>
+    </property>
+    <layout class="QFormLayout" name="formLayout">
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>Start</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="startPoint"/>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>End</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="endPoint"/>
+     </item>
+     <item row="2" column="0" colspan="2">
+      <widget class="QPushButton" name="moveButton">
+       <property name="text">
+        <string>Move</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
    <widget class="QGraphicsView" name="graphicsView">
     <property name="geometry">
      <rect>
-      <x>160</x>
-      <y>230</y>
+      <x>200</x>
+      <y>240</y>
       <width>91</width>
       <height>131</height>
      </rect>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="startPoint">
-    <property name="geometry">
-     <rect>
-      <x>740</x>
-      <y>110</y>
-      <width>113</width>
-      <height>28</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLineEdit" name="endPoint">
-    <property name="geometry">
-     <rect>
-      <x>740</x>
-      <y>160</y>
-      <width>113</width>
-      <height>28</height>
-     </rect>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>120</y>
-      <width>63</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Start</string>
-    </property>
-   </widget>
-   <widget class="QLabel" name="label_2">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>170</y>
-      <width>63</width>
-      <height>20</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>End</string>
-    </property>
-   </widget>
-   <widget class="QPushButton" name="moveButton">
-    <property name="geometry">
-     <rect>
-      <x>660</x>
-      <y>220</y>
-      <width>84</width>
-      <height>28</height>
-     </rect>
-    </property>
-    <property name="text">
-     <string>Move</string>
     </property>
    </widget>
   </widget>
@@ -89,7 +172,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>896</width>
+     <width>902</width>
      <height>25</height>
     </rect>
    </property>
