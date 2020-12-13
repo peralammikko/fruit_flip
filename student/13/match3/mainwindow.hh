@@ -41,6 +41,10 @@ private slots:
 
     void on_refillCheck_stateChanged();
 
+    void on_moveHelpButton_clicked();
+
+    void on_settingsHelpButton_clicked();
+
 private:
 
     Ui::MainWindow *ui;
@@ -98,11 +102,15 @@ private:
     // but try to do so, if you want to use real fruits instead of rectangles.
     void draw_fruit();
 
+    void init_game();
+
     void init_grids();
 
     void swap_blocks();
 
     bool check_matches();
+
+    void remove_matched_blocks(int col, int row, int counter, bool verticalmatch);
 
     void update_screen();
 
@@ -132,7 +140,13 @@ private:
 
     int points_ = 0;
 
-    void update_timer();
+    void update_timer(int mins, int secs);
+
+    void on_timeout();
+
+    void message(QString message);
+
+    bool check_win();
 
 };
 #endif // MAINWINDOW_HH

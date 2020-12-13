@@ -27,11 +27,11 @@
      <string>Reset game</string>
     </property>
    </widget>
-   <widget class="QGroupBox" name="groupBox">
+   <widget class="QGroupBox" name="settingsBox">
     <property name="geometry">
      <rect>
       <x>570</x>
-      <y>220</y>
+      <y>250</y>
       <width>291</width>
       <height>171</height>
      </rect>
@@ -39,7 +39,7 @@
     <property name="title">
      <string>Settings</string>
     </property>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -52,7 +52,7 @@
       <item row="0" column="0" colspan="2">
        <widget class="QCheckBox" name="delayCheck">
         <property name="text">
-         <string>Add delay to falling blocks</string>
+         <string>Reflex mode: delay on falling blocks</string>
         </property>
        </widget>
       </item>
@@ -65,17 +65,17 @@
       </item>
      </layout>
     </widget>
-    <widget class="QCheckBox" name="checkBox">
+    <widget class="QPushButton" name="settingsHelpButton">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>130</y>
-       <width>191</width>
-       <height>26</height>
+       <x>270</x>
+       <y>0</y>
+       <width>21</width>
+       <height>21</height>
       </rect>
      </property>
      <property name="text">
-      <string>Battle Royale Mode</string>
+      <string>?</string>
      </property>
     </widget>
    </widget>
@@ -83,9 +83,9 @@
     <property name="geometry">
      <rect>
       <x>570</x>
-      <y>400</y>
+      <y>430</y>
       <width>291</width>
-      <height>143</height>
+      <height>131</height>
      </rect>
     </property>
     <property name="title">
@@ -94,17 +94,17 @@
     <widget class="QPushButton" name="gridSettingsButton">
      <property name="geometry">
       <rect>
-       <x>60</x>
+       <x>40</x>
        <y>90</y>
-       <width>168</width>
+       <width>201</width>
        <height>28</height>
       </rect>
      </property>
      <property name="text">
-      <string>Apply changes and reset</string>
+      <string>Apply and reset</string>
      </property>
     </widget>
-    <widget class="QWidget" name="">
+    <widget class="QWidget" name="layoutWidget">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -113,7 +113,7 @@
        <height>30</height>
       </rect>
      </property>
-     <layout class="QHBoxLayout" name="horizontalLayout">
+     <layout class="QHBoxLayout" name="gridGroup">
       <item>
        <widget class="QLineEdit" name="gridSizeXLine"/>
       </item>
@@ -153,7 +153,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QLabel" name="label_3">
+   <widget class="QLabel" name="scoreLabel">
     <property name="geometry">
      <rect>
       <x>20</x>
@@ -166,7 +166,7 @@
      <string>Blocks destroyed:</string>
     </property>
    </widget>
-   <widget class="QLabel" name="label_2">
+   <widget class="QLabel" name="timeLabel">
     <property name="geometry">
      <rect>
       <x>250</x>
@@ -179,45 +179,6 @@
      <string>Time:</string>
     </property>
    </widget>
-   <widget class="QWidget" name="">
-    <property name="geometry">
-     <rect>
-      <x>630</x>
-      <y>110</y>
-      <width>167</width>
-      <height>98</height>
-     </rect>
-    </property>
-    <layout class="QFormLayout" name="formLayout">
-     <item row="0" column="0">
-      <widget class="QLabel" name="startLabel">
-       <property name="text">
-        <string>Start</string>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="1">
-      <widget class="QLineEdit" name="startPoint"/>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="endLabel">
-       <property name="text">
-        <string>End</string>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QLineEdit" name="endPoint"/>
-     </item>
-     <item row="2" column="0" colspan="2">
-      <widget class="QPushButton" name="moveButton">
-       <property name="text">
-        <string>Move</string>
-       </property>
-      </widget>
-     </item>
-    </layout>
-   </widget>
    <widget class="QGraphicsView" name="graphicsView">
     <property name="geometry">
      <rect>
@@ -228,7 +189,7 @@
      </rect>
     </property>
    </widget>
-   <widget class="QWidget" name="">
+   <widget class="QWidget" name="layoutWidget">
     <property name="geometry">
      <rect>
       <x>250</x>
@@ -237,7 +198,7 @@
       <height>31</height>
      </rect>
     </property>
-    <layout class="QHBoxLayout" name="horizontalLayout_2">
+    <layout class="QHBoxLayout" name="timeGroup">
      <item>
       <widget class="QLCDNumber" name="lcdNumberMins"/>
      </item>
@@ -253,6 +214,104 @@
      </item>
     </layout>
    </widget>
+   <widget class="QGroupBox" name="movementBox">
+    <property name="geometry">
+     <rect>
+      <x>570</x>
+      <y>110</y>
+      <width>161</width>
+      <height>131</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Select two blocks</string>
+    </property>
+    <widget class="QLabel" name="endLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>64</y>
+       <width>25</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>End</string>
+     </property>
+    </widget>
+    <widget class="QLabel" name="startLabel">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>30</y>
+       <width>34</width>
+       <height>28</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Start</string>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="endPoint">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>64</y>
+       <width>89</width>
+       <height>28</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QLineEdit" name="startPoint">
+     <property name="geometry">
+      <rect>
+       <x>50</x>
+       <y>30</y>
+       <width>89</width>
+       <height>28</height>
+      </rect>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="moveButton">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>100</y>
+       <width>129</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Move</string>
+     </property>
+    </widget>
+    <widget class="QPushButton" name="moveHelpButton">
+     <property name="geometry">
+      <rect>
+       <x>140</x>
+       <y>0</y>
+       <width>21</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>?</string>
+     </property>
+    </widget>
+   </widget>
+   <widget class="QPushButton" name="closeButton">
+    <property name="geometry">
+     <rect>
+      <x>820</x>
+      <y>10</y>
+      <width>61</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Close</string>
+    </property>
+   </widget>
   </widget>
   <widget class="QMenuBar" name="menubar">
    <property name="geometry">
@@ -267,5 +326,22 @@
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
  <resources/>
- <connections/>
+ <connections>
+  <connection>
+   <sender>closeButton</sender>
+   <signal>clicked()</signal>
+   <receiver>MainWindow</receiver>
+   <slot>close()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>850</x>
+     <y>50</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>450</x>
+     <y>313</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
 </ui>
