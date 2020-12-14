@@ -6,6 +6,37 @@
 #include <QPixmap>
 #include <vector>
 
+/* 13.2 (P) Match3
+ * fruit_flip on peli, jossa tarkoituksena on yhdistellä värillisiä ruutuja eli hedelmiä.
+ * Pelissä pelaaja voi liikutella ruutuja ja siten luoda kolmen tai useamman samanvärisen ruudun suoria
+ * poistaakseen ne peliruudukosta. Pelin ideana on, että ruudukko on sattumanvaraisesti generoitu, jolloin haasteena
+ * on liikutella ruutuja "matchien" eli värisuorien maksimoimiseksi. Matchit voivat olla pystysuoria
+ * (3+ samanväristä ruutua päällekäin) tai vaakasuoria (3+ samanväristä ruutua vierekkäin).
+ * Värisuoran tapahtuessa suoran ruudut poistuvat pelistä, joka aiheuttaa niiden yläpuolella
+ * olevien hedelmien tippumisen. Kun ruudukko on lopulta tyhjä, pelaaja on voittanut pelin.
+ *
+ * Pelaaja klikkaa peliruudukkossa olevia värikkäitä ruutuja eli hedelmiä vaihdellakseen niiden paikkoja.
+ * Pelissä on sallittua siirtää vain vierekkäisiä ruutuja neljässä pääsuunnassa (ylös, alas, vasen, oikea).
+ * Klikattuaan kahta vierekkäistä ruutua pelaaja vahvistaa siirron painamalla nappia "Move", jolloin
+ * siirto tapahtuu mikäli se on laillinen (vierekkäin, ei ruudukon ulkopuolella). Peliin on lisätty joitakin
+ * lisäasetuksia, joita pelaaja pystyy säätelemään muuttaakseen pelin sääntöjä, kuten tippuvien ruutujen viiveen poisto,
+ * jatkuva pelitila tai ruudukon koon muuttaminen. Painamalla peli-ikkunasta löytyviä "?"
+ * -nappeja pelaajan on mahdollista saada lyhyitä ohjeita toiminnallisuuksiin ja asetuksiin liityen.
+ *
+ * Tarkempi dokumentaatio ohjelman toiminnasta ja ominaisuuksista löytyy tiedostosta instructions.txt.
+ * Määrittely ja kuvaukset funktioiden toiminnasta löytyvät tiedostoista mainwindow.hh ja mainwindow.cpp.
+ *
+ * Ohjelman kirjoittaja
+ * Nimi: Mikko Perälä
+ * Opiskelijanumero: 256960
+ * Käyttäjätunnus: peralam
+ * E-Mail: mikko.perala@tuni.fi
+ *
+ * Huomioita ohjelmasta:
+ * Timer-widget aiheuttaa muistiongelmia, ratkaisua ei löydetty.
+ * Ylisuuren ruudukon (yli 15 saraketta/riviä) saattaa hidastaa konetta ja ohjelman toimintaa huomattavasti.
+*/
+
 using namespace std;
 
 
@@ -47,9 +78,10 @@ MainWindow::MainWindow(QWidget *parent)
 
 MainWindow::~MainWindow()
 {
-    delete timer_;
     grid_.clear();
-    numbergrid_.clear();
+    fruitGrid_.clear();
+    delete timer_;
+    delete scene_;
     delete ui;
 }
 
@@ -101,19 +133,21 @@ void MainWindow::init_titles()
 
 /* Alustaa peliruudukon luomalla numeroruudukon (6x6) ja piirrettävän ruudunkon,
  * johon numeroita vastaavat hedelmät/värit haetaan update_screen -funktiosta.
+ * Tyhjentää mahdolliset ruudukot ennen uuden alustamista.
+ * Luo hedelmistä ja painonapeista omia vektoreitaan, jotka sitten lisätään
+ * ruudukon rakenteeseen (vektori vektoreista).
 */
 void MainWindow::init_grids()
 {
-    qDebug() << "init grid begin";
     grid_.clear();
-    numbergrid_.clear();
+    fruitGrid_.clear();
     std::vector<QPushButton*> buttonVec = {};
     vector<Fruit_kind> fruitVec = {};
     for (int i = 0; i < GRID_COL_SIZE_+1; i++) {
         for (int j = 0; j < GRID_ROW_SIZE_+1; j++) {
-            QPushButton* newButton = new QPushButton;
-            buttonVec.push_back(newButton);
 
+            // Satunnaisgeneroitu luku rndm määrittää mikä hedelmä ruudukon kohtaan tulee
+            // käyttämällä header-tiedostossa luotua enum-rakennetta.
             int rndm = distr_(randomEng_);
             Fruit_kind fruit = static_cast<Fruit_kind>(rndm);
             fruitVec.push_back(fruit);
@@ -121,19 +155,20 @@ void MainWindow::init_grids()
         grid_.push_back(buttonVec);
         buttonVec.clear();
 
-        numbergrid_.push_back(fruitVec);
+        fruitGrid_.push_back(fruitVec);
         fruitVec.clear();
     }
-    qDebug() << "init grid end";
-
-    // Jos alustetulta pelilaudalta löytyy matcheja, alustetaan pelilauta uudestaan
+    // Jos alustetusta ruudukosta löytyy matcheja, alustetaan pelilauta uudestaan.
+    // Kun sopiva ruudukko on löytynyt, päivitetään näkymä.
     if (check_matches() == true) {
         init_grids();
     }
-
     update_screen();
 }
 
+// Etsitään ruudukossa olevat ruuduille (hedelmille) oikeanlaiset värit
+// käyttämällä headerissa määriteltyä numeroitua enum-rakennetta.
+// Parametri: rndm = satunnaisgeneroitu numero, joka määrittelee "hedelmän" ja sen värin
 QColor MainWindow::paint_button(int rndm)
 {
     QColor colr(Qt::black);
@@ -149,47 +184,30 @@ QColor MainWindow::paint_button(int rndm)
     return colr;
 }
 
-// Etsitään laudalla olevat ruuduille (hedelmille) oikeanlaiset värit
-// käyttämällä headerissa määriteltyä numeroitua enum-rakennetta
-QBrush MainWindow::paint_block(int numbr)
-{
-    QBrush brush(Qt::black);
-    switch(numbr) {
-    case PLUM: brush.setColor(Qt::magenta); break;
-    case STRAWBERRY: brush.setColor(Qt::red); break;
-    case APPLE: brush.setColor(Qt::green); break;
-    case LEMON: brush.setColor(Qt::yellow); break;
-    case BLUEBERRY: brush.setColor(Qt::blue); break;
-    case ORANGE: brush.setColor(QColor (255,155,51)); break;
-    case EMPTY: brush.setColor(QColor (225,225,225)); break;
-    }
-    return brush;
-}
-
 // Alustetaan pistelaskuri (nollataan pisteet ja taulu).
 void MainWindow::init_score()
 {
-    palette_.setColor(QPalette::Background, Qt::black);
-    ui->lcdNumberScore->setPalette(palette_);
+    initPalette_.setColor(QPalette::Background, Qt::black);
+    ui->lcdNumberScore->setPalette(initPalette_);
     ui->lcdNumberScore->setAutoFillBackground(true);
     points_ = 0;
     ui->lcdNumberScore->display(0);
 }
 
-// Alustetaan peli-ikkunan kello
+// Alustetaan ja väritetään peli-ikkunan kello
 void MainWindow::init_timer()
 {
     timer_ = new QTimer;
     timer_->setInterval(1000);
-    palette_.setColor(QPalette::Background, Qt::black);
-    ui->lcdNumberMins->setPalette(palette_);
+    ui->lcdNumberMins->setPalette(initPalette_);
     ui->lcdNumberMins->setAutoFillBackground(true);
 
-    ui->lcdNumberSecs->setPalette(palette_);
+    ui->lcdNumberSecs->setPalette(initPalette_);
     ui->lcdNumberSecs->setAutoFillBackground(true);
 }
 
 // Sekuntikellon toiminnallisuus, johon timer yhdistetään ikkunan auetessa
+// Kun sekunnit tulevat täyteen, lisätään minuutti
 void MainWindow::on_timeout()
 {
     int mins = ui->lcdNumberMins->intValue();
@@ -213,12 +231,9 @@ void MainWindow::update_timer(int mins, int secs)
 // Tyhjät ruudut väritetään backgroundColor -värillä.
 void MainWindow::update_screen()
 {
-    qDebug() << "Updating begin";
-    scene_->clear();
     for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
-        qDebug() << "col "<< col << " updated";
         for (int row = 0; row < GRID_ROW_SIZE_+1; row++) {
-            Fruit_kind fruitInGrid = numbergrid_.at(col).at(row);
+            Fruit_kind fruitInGrid = fruitGrid_.at(col).at(row);
             QPushButton* fruitButton = new QPushButton;
             connect(fruitButton, &QPushButton::clicked, this, &MainWindow::fruitButton_clicked);
 
@@ -228,91 +243,67 @@ void MainWindow::update_screen()
 
             fruitButton->setGeometry(col*SQUARE_SIDE, row*SQUARE_SIDE, SQUARE_SIDE, SQUARE_SIDE);
             scene_->addWidget(fruitButton);
-
-            /*
-            QPen blackPen(Qt::black);
-            QColor backGroundColor(225, 225, 225);
-
-            if (fruitInGrid == EMPTY) {
-
-                rect_ = scene_->addRect(i*SQUARE_SIDE, j*SQUARE_SIDE, SQUARE_SIDE, SQUARE_SIDE, blackPen, backGroundColor);
-
-            } else {
-
-
-                QBrush colorBrush = paint_block(fruitInGrid);
-                rect_ = scene_->addRect(i*SQUARE_SIDE,j*SQUARE_SIDE,SQUARE_SIDE,SQUARE_SIDE, blackPen, colorBrush);
-
-            }
-            */
         }
     }
-    qDebug() << "Screen updated";
 }
 
-
+// Ruutujen liikutteluun käytettävä funktio.
+// Hakee pelaajan klikkaamien ruutujen koordinaatit ja vaihtaa niiden paikkaa keskenään,
+// mikäli ne ovat vierekkäin (pystysuunnassa tai vaakasuunnassa).
 void MainWindow::swap_blocks()
 {
-    qDebug() << "swapping begin";
-    /*
-    string alphabet = "abcdefghijklmnopqrstuvwxyz";
-    string start = on_startPoint_editingFinished();
-    string end = on_endPoint_editingFinished();
-    if (start.size() > 2 || end.size() > 2 || start == "" || end == "") {
-        return;
-    }
-    int startX = alphabet.find(start.at(0)); int startY = alphabet.find(start.at(1));
-    int endX = alphabet.find(end.at(0)); int endY = alphabet.find(end.at(1));
-    */
     int startX = startPoint_.at(0); int startY = startPoint_.at(1);
     int endX = endPoint_.at(0); int endY = endPoint_.at(1);
 
+    // Ruutuja ei siirretä mikäli, ne saadut koordinaatit ovat ruudukon ulkopuolella.
     if (startX > GRID_COL_SIZE_ || startX < 0 || startY > GRID_ROW_SIZE_ || startY < 0) {
         return;
     } else if (endX > GRID_COL_SIZE_ || endX < 0 || endY > GRID_ROW_SIZE_ || endX < 0) {
         return;
     }
 
+    // Ruutuja ei myöskään siirretä, jos niiden etäisyys toisistaan ei ole 1, jolloin ruutujen on
+    // oltava vierekkäin, jotta siirto on mahdollinen.
     int distanceX = abs(startX-endX);
     int distanceY = abs(startY-endY);
-    if (distanceX > 1 && distanceY > 1) {
+    if (distanceX+distanceY != 1) {
         return;
     }
 
-    Fruit_kind temp;
-    temp = numbergrid_.at(startX).at(startY);
-    numbergrid_.at(startX).at(startY) = numbergrid_.at(endX).at(endY);
-    numbergrid_.at(endX).at(endY) = temp;
-
-    qDebug() << "Blocks swapped";
+    // Vaihdetaan hedelmien paikat hyödyntämällä apumuuttujaa.
+    Fruit_kind temp = EMPTY;
+    temp = fruitGrid_.at(startX).at(startY);
+    fruitGrid_.at(startX).at(startY) = fruitGrid_.at(endX).at(endY);
+    fruitGrid_.at(endX).at(endY) = temp;
 
 }
-
+// Värisuorien eli matchien tarkistukseen käytettävä funktio. Kutsutaan jokaisen pelaajan siirron jälkeen sekä pelin alustuksessa.
+// Palauttaa totuusarvon true, jos yksikin värisuora löytyy.
 bool MainWindow::check_matches()
 {
-    qDebug() << "matching begin";
     // Pystysuuntaiset matchit
-    Fruit_kind currentnum = EMPTY;
+    Fruit_kind currentFruit = EMPTY;
     bool matchFound = false;
+    // Hedelmäruudukkoa aletaan käymään yksitellen läpi. Värisuoran laskuri alustetaan arvoon 1.
 
     for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
         int counter = 1;
         for (int row = 0; row < GRID_ROW_SIZE_-1; row++) {
-            currentnum = numbergrid_.at(col).at(row);
+            currentFruit = fruitGrid_.at(col).at(row);
 
             // Tyhjistä palikoista muodostuvia matcheja ei huomioida, joten niiden tarkastelusta hypätään yli
-            if (currentnum == EMPTY) {
+            if (currentFruit == EMPTY) {
                 continue;
             }
 
-            /* Tarkastetaan jokaisen ruudunkon hedelmän kohdalla montako samanlaista löydetään seuraavista hedelmistä
+            /* Tarkastetaan jokaisen ruudukon hedelmän kohdalla montako samanlaista löydetään seuraavista hedelmistä
              * (ruudukon reunaan asti).
              * Jos hedelmäX ja hedelmäY ovat samat, lisätään laskuriin +1.
              * Jos hedelmäX ja hedelmäZ ovat samat, lisätään laskuriin+1.
             */
             for (int nextrow = row+1; nextrow < GRID_ROW_SIZE_+1; nextrow++) {
-                Fruit_kind nextfruit = numbergrid_.at(col).at(nextrow);
-                if (nextfruit == currentnum) {
+                Fruit_kind nextFruit = fruitGrid_.at(col).at(nextrow);
+                if (nextFruit == currentFruit) {
                     counter++;
                     if (nextrow == GRID_ROW_SIZE_) {
                         if (counter > 2) {
@@ -325,7 +316,7 @@ bool MainWindow::check_matches()
                     /*
                      * Jos hedelmäX ja hedelmäÖ ovat eri (ja laskurissa on vähintään 3:n suora),
                      * poistetaan samaa hedelmää sisältävät ruudut. Laskuri palautetaan alkuarvoon yksi
-                     * ja siirrytään seuraavaan hedelmään.
+                     * ja siirrytään seuraavaan hedelmään (--> break).
                     */
                 } else {
                     if (counter > 2) {
@@ -339,17 +330,18 @@ bool MainWindow::check_matches()
         }
     }
 
-    // Vaakasuuntaiset matchit
+    // Vaakasuuntaiset matchit: sama kuin pystysuuntaisten matchien tarkistus, mutta liikutaan
+    // samalla rivillä sarakkeelta toiselle.
     for (int col = 0; col < GRID_COL_SIZE_-1; col++) {
         int counter = 1;
         for (int row = 0; row < GRID_ROW_SIZE_+1; row++) {
-            currentnum = numbergrid_.at(col).at(row);
-            if (currentnum == EMPTY) {
+            currentFruit = fruitGrid_.at(col).at(row);
+            if (currentFruit == EMPTY) {
                 continue;
             }
               for (int nextcol = col+1; nextcol < GRID_COL_SIZE_+1; nextcol++) {
-                Fruit_kind nextfruit = numbergrid_.at(nextcol).at(row);
-                if (nextfruit == currentnum) {
+                Fruit_kind nextfruit = fruitGrid_.at(nextcol).at(row);
+                if (nextfruit == currentFruit) {
                     counter++;
                     if (nextcol == GRID_COL_SIZE_) {
                         if (counter > 2) {
@@ -377,13 +369,11 @@ bool MainWindow::check_matches()
      * syntynyt matcheja vai ei.
     */
     if (matchFound) {
-        qDebug() << "match found, rerolling";
-        ui->lcdNumberScore->display(points_);
         update_screen();
+        ui->lcdNumberScore->display(points_);
         QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
         return true;
     }
-    qDebug() << "matching end";
     return false;
 }
 
@@ -392,55 +382,66 @@ void MainWindow::remove_matched_blocks(int col, int row, int counter, bool verti
 {
     if (verticalmatch == true) {
         for (int j = 0; j < counter; j++) {
-            numbergrid_.at(col).at(row+j) = EMPTY;
+            fruitGrid_.at(col).at(row+j) = EMPTY;
             points_ += 1;
-            qDebug() << "block removed at " << col << ": " << row+j;
         }
     } else {
         for (int j = 0; j < counter; j++) {
-            numbergrid_.at(col+j).at(row) = EMPTY;
+            fruitGrid_.at(col+j).at(row) = EMPTY;
             points_ += 1;
-            qDebug() << "block removed at " << col+j << ": " << row;
         }
+    }
+
+    // Isommista poistoista pelaajalle annetaan lisäpisteitä
+    if (counter == 4) {
+        points_ += 1;
+    } else if (counter == 5) {
+        points_ += 3;
     }
 }
 
 
 void MainWindow::drop_blocks()
 {
-    qDebug() << "drop begin";
     // Pudottaa hedelmiä niin kauas kunnes ruutujen alta ei löydy enää tyhjiä
-    while (true) {
+    // Pidetään kirjaa tyhjistä ruuduista apumuuttujilla emptiesBelow (onko minkään hedelmän alla tyhjää kohtaa)
+    // ja emptyFirstRow (onko ylimmällä rivillä tyhjää).
         Fruit_kind currentFruit = EMPTY;
         Fruit_kind belowFruit = EMPTY;
-        bool emptyBelow = false;
+        bool emptiesBelow = false;
+        bool emptyFirstRow = false;
         for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
             for (int row = GRID_ROW_SIZE_-1; row >= 0; row--) {
-                currentFruit = numbergrid_.at(col).at(row);
-                belowFruit = numbergrid_.at(col).at(row+1);
+                if (fruitGrid_.at(col).at(0) == EMPTY) {
+                    emptyFirstRow = true;
+                }
+                currentFruit = fruitGrid_.at(col).at(row);
+                belowFruit = fruitGrid_.at(col).at(row+1);
 
                 // Jos alla on tyhjä ruutu ja tämänhetkisessä tarkastelussa oleva ruutu EI ole tyhjä,
                 // pudotetaan tämänhetkinen hedelmä alla olevaan tyhjään ruutuun ja jätetään nykyinen ruutu tyhjäksi.
                 if (belowFruit == EMPTY && currentFruit != EMPTY) {
-                    emptyBelow = true;
-                    numbergrid_.at(col).at(row+1) = currentFruit;
-                    numbergrid_.at(col).at(row) = EMPTY;
+                    emptiesBelow = true;
+                    fruitGrid_.at(col).at(row+1) = currentFruit;
+                    fruitGrid_.at(col).at(row) = EMPTY;
                 }
             }
         }
 
-        // Kun palikoiden alta ei enää löydy tyhjiä ruutuja, tarkistetaan onko pudonneiden
-        // palikoiden johdosta syntynyt uusia matcheja. Tiputetaan myös rivi uusia hedelmiä
-        // ruudun ylälaitaan mikäli käyttäjä on valinnut jatkuvan pelimuodon.
-        if (emptyBelow == false) {
-            if (refill_ == true) {
+        // Funktio kutsuu itseään, jos jonkun ruudun alta löytyy vielä tyhjiä ruutuja.
+        // Jos kaikki ruudut ovat pudonneet alas ja yläriviin on muodostunut tyhjiä kohtia,
+        // täytetään tyhjät kohdat funktiolla refill_blocks ja pudotetaan ne jälleen alas.
+        if (emptiesBelow == true) {
+            drop_blocks();
+        } else {
+            if (refill_ == true && emptyFirstRow == true) {
                 refill_blocks();
+                drop_blocks();
             }
-            break;
         }
-    }
+
+        // Tarkastellaan onko pudotusten johdosta syntynyt matcheja ja päivitetään ruudun näkymää.
     check_matches();
-    qDebug() << "dropping end";
     update_screen();
     return;
 }
@@ -449,15 +450,12 @@ void MainWindow::drop_blocks()
 void MainWindow::refill_blocks()
 {
     for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
-        if (numbergrid_.at(col).at(0) != EMPTY) {
+        if (fruitGrid_.at(col).at(0) != EMPTY) {
             continue;
         }
         Fruit_kind newfruit = static_cast<Fruit_kind>(distr_(randomEng_));
-        numbergrid_.at(col).at(0) = newfruit;
+        fruitGrid_.at(col).at(0) = newfruit;
     }
-    // Päivitetään ruutu ja kutsutaan drop_blocks -funktiota pudottamaan luodut hedelmät (viiveellä).
-    update_screen();
-    QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
 }
 
 // Lukitaan/avataan syöteruudut ja liikkumisnappi.
@@ -475,6 +473,11 @@ void MainWindow::lock_buttons(bool lockup)
     }
 }
 
+/* Esittää pelaajan valitsemien ruutujen koordinaatit peli-ikkunassa.
+ * Käyttää private apumuuttujaa turn_ määrittelemään kumpi ruutu on kyseessä
+ * (ensimmäinen vai jälkimmäinen klikkaus). Kerrottu lisää funktion
+ * fruitButton_clicked kommentoinnissa.
+*/
 void MainWindow::display_move_coordinates(int x, int y)
 {
     string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -487,7 +490,9 @@ void MainWindow::display_move_coordinates(int x, int y)
     }
 }
 
-// Luodaan ikkuna, jossa kerrotaan pelin päättymisestä/voitosta (message) ja pelaajan lopulliset pisteet.
+// Luodaan ikkuna, jossa kerrotaan pelin päättymisestä/voitosta ja pelaajan lopulliset pisteet.
+// Parametri message vaihtelee sen mukaan, onko pelaaja voittanut vai keskeyttänyt pelinsä.
+// Pelin päätyttyä pelaajalle näytetään hänen ansaitsemansa pisteet.
 void MainWindow::send_message(QString message)
 {
     QString score = QString::number(points_);
@@ -503,26 +508,12 @@ bool MainWindow::check_win()
 {
     for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
         for (int row = 0; row < GRID_ROW_SIZE_+1; row++) {
-            if (numbergrid_.at(col).at(GRID_ROW_SIZE_) != EMPTY) {
+            if (fruitGrid_.at(col).at(GRID_ROW_SIZE_) != EMPTY) {
                 return false;
             }
         }
     }
     return true;
-}
-
-// Haetaan valitun lähtöruudun koordinaatit (2 kirjainta)
-string MainWindow::on_startPoint_editingFinished()
-{
-    string startPoint = ui->startPointLine->text().toStdString();
-    return startPoint;
-}
-
-// Haetaan valitun pääteruudun koordinaatit
-string MainWindow::on_endPoint_editingFinished()
-{
-    string endPoint = ui->endPointLine->text().toStdString();
-    return endPoint;
 }
 
 // Liikkumisnappulan painalluksesta tapahtuvat toiminnot.
@@ -534,6 +525,7 @@ void MainWindow::on_moveButton_clicked()
         timer_->start();
         ui->resetButton->setText("End game");
     }
+    lock_buttons(true);
     // Vaihdetaan valittujen hedelmien paikat,
     swap_blocks();
     // päivitetään ruutu vaihdon jälkeen
@@ -548,17 +540,23 @@ void MainWindow::on_moveButton_clicked()
      * ja lukitaan liikkumiskomennot. Muutetaan reset-napin teksti, josta pelin
      * voi käynnistää uudestaan.
     */
-    if (check_win() == true) {
-        send_message("A winner is you!");
-        timer_->stop();
-        ui->resetButton->setText("Play again?");
-        lock_buttons(true);
-        points_ = 0;
+    if (refill_ == false) {
+        if (check_win() == true) {
+            send_message("A winner is you!");
+            timer_->stop();
+            ui->resetButton->setText("Play again?");
+            lock_buttons(true);
+            points_ = 0;
+        }
     }
+    // Unohdetaan siirrossa valitut ruudut ja tyhjennetään
+    // koordinaattikentät jokaisen siirron päätteeksi
+    // vahinkosiirtojen välttämiseksi.
     startPoint_ = {-1, -1};
     endPoint_ = {-1, -1};
     ui->startPointLine->clear();
     ui->endPointLine->clear();
+    lock_buttons(false);
     return;
 }
 
@@ -583,7 +581,8 @@ void MainWindow::on_refillCheck_stateChanged()
     refill_ = false;
 }
 
-// Lopettaa alkaneen (keskeytetyn) pelin tai nollaa pelilaudan, pisteet ja kellon.
+// Lopettaa alkaneen (keskeytetyn) pelin ja lukitsee ruutujen siirtelyn, jolloin
+// pelaajan on aloitettava uusi peli. Jos pisteitä ei vielä ole, nollaa ja alutaa pelilaudan, pisteet ja kellon.
 void MainWindow::on_resetButton_clicked()
 {
     if (points_ > 0) {
@@ -601,46 +600,103 @@ void MainWindow::on_resetButton_clicked()
     init_game();
 }
 
+/* Apufunktio, jota kutsutaan klikkaamalla jotakin peliruudukon ruuduista.
+ * Tallettaa hiiren sijainnin ikkunassa klikkaamisen hetkellä ja erottelee
+ * ne X/Y-koordinaateiksi, joista pystytään laskemaan peliruudun mitoilla
+ * minkä sarakkeen ja rivin kohdalla klikkaus tapahtui.
+*/
+void MainWindow::fruitButton_clicked()
+{
+    QPoint pos = QCursor::pos();
+    int posX = pos.x();
+    int posY = pos.y();
+    int columnPos = ((posX-LEFT_MARGIN)/SQUARE_SIDE)-1;
+    int rowPos = ((posY-TOP_MARGIN-(SQUARE_SIDE/2))/SQUARE_SIDE)-1;
+
+    // Laskun epätarkkuuden vuoksi hylätään klikkaukset, joissa
+    // sarakkeet ja rivit ruudukon ulkopuolella
+    if (columnPos > GRID_COL_SIZE_ || columnPos < 0) {
+        return;
+    } else if (rowPos > GRID_ROW_SIZE_ || rowPos < 0) {
+        return;
+    }
+
+    // Käytetään apumuuttuja turn_, jolla joka toisella klikkauksella valitaan ensimmäinen ruutu
+    // ja joka toisella toinen liikuteltava ruutu. Jokaisen onnistuneen klikkauksen jälkeen
+    // turn kasvaa yhdellä.
+    if (turn_ % 2 != 0) {
+        startPoint_[0] = columnPos;
+        startPoint_[1] = rowPos;
+        display_move_coordinates(columnPos, rowPos);
+    } else {
+        endPoint_[0] = columnPos;
+        endPoint_[1] = rowPos;
+        display_move_coordinates(columnPos, rowPos);
+    }
+    turn_ += 1;
+    return;
+}
+
 // Muuttaa pelilaudan kokoa haluttuun X kertaa Y kokoon.
 void MainWindow::on_gridSettingsButton_clicked()
 {
+    // Ruudukon koon hakeminen Line Edit-laatikoista ja muuttaminen luvuiksi
     QString gridX = ui->gridSizeXLine->text();
     QString gridY = ui->gridSizeYLine->text();
     if (gridX != "" || gridY != "") {
         qint32 gridXint = gridX.toInt();
         qint32 gridYint = gridY.toInt();
-        if (gridXint > 2 || gridYint > 2) {
+
+        // Ruudukossa toisen dimension on oltava vähintään kolme, jotta peliä pystyy pelaamaan.
+        if (gridXint < 2 || gridYint < 2) {
+            return;
+        } else {
             GRID_COL_SIZE_ = gridXint-1;
             GRID_ROW_SIZE_ = gridYint-1;
+
+            // Poistetaan vanha ruudukon peli-ikkuna ja luodaan uusi syötyistä mitoista.
+            // Ruutujen ja ruudukon ikkunan välille jätetty "kehykseksi" 2 pikseliä.
+            // Peli nollataan ja lauta alustetaan uudestaan.
             delete scene_;
             scene_ = new QGraphicsScene(this);
             ui->graphicsView->setGeometry(LEFT_MARGIN, TOP_MARGIN,
-                                          (SQUARE_SIDE*gridXint)+10, (SQUARE_SIDE*gridYint)+10);
+                                          (SQUARE_SIDE*gridXint)+2, (SQUARE_SIDE*gridYint)+2);
             ui->graphicsView->setScene(scene_);
-            scene_->setSceneRect(0, 0, SQUARE_SIDE*gridXint+2, SQUARE_SIDE*gridYint+2);
+            scene_->setSceneRect(0, 0, SQUARE_SIDE*gridXint, SQUARE_SIDE*gridYint);
             points_ = 0;
+            ui->gridSizeXLine->clear();
+            ui->gridSizeYLine->clear();
             on_resetButton_clicked();
             return;
         }
     }
+    // Jos tekstikentät jätetään tyhjäksi ja nappia on painettu, alustetaan pelilauta oletuskoolla (6x6)
     GRID_COL_SIZE_ = COLUMNS-1;
     GRID_ROW_SIZE_ = ROWS-1;
+    ui->graphicsView->setGeometry(LEFT_MARGIN, TOP_MARGIN,
+                                  BORDER_RIGHT + 2, BORDER_DOWN + 2);
+    ui->graphicsView->setScene(scene_);
+    scene_->setSceneRect(0, 0, BORDER_RIGHT - 1, BORDER_DOWN - 1);
     on_resetButton_clicked();
 }
 
-
+// Apunappi ruutujen siirtelyyn. Pelaajan klikatessa "?" nappia, aukeaa ruutuun ikkuna, jossa lukee pikaisia
+// ohjeita pelin toiminnallisuuteen liittyen.
 void MainWindow::on_moveHelpButton_clicked()
 {
     msg_.setText("Ohjeet pelaamiseen");
     msg_.setInformativeText("- Yhdistä kolme tai useampi samanlaista hedelmää pysty- tai vaakasuunnassa! \n"
-                            "- Vaihda kahden ruudun paikkaa keskenään syöttämällä Start- ja End-ruutuihin koordinaatit haluamillesi "
-                            "ruuduille muodossa xy \n"
-                            "- Onnistunut suora poistaa hedelmät pelistä \n");
+                            "- Vaihda kahden ruudun paikkaa keskenään klikkaamalla kahta vierekkäistä ruutua,"
+                            "jolloin valittujen ruutujen koordinaatit näkyvät kentissä Start ja End \n"
+                            "- Onnistunut suora poistaa hedelmät pelistä \n"
+                            "- Värillisen ruudun siirtäminen tyhjään ruutuun on mahdollista ja korkealta \n"
+                            "tehtynä aiheuttaa sen putoamisen.");
     msg_.addButton(QMessageBox::Ok);
     msg_.setIcon(QMessageBox::Information);
     msg_.exec();
 }
 
+// Apunappi asetuksille. Avaa ruutuun ikkunan, jossa on lyhyet selitykset asetusten toiminnasta ja käyttöönotosta.
 void MainWindow::on_settingsHelpButton_clicked()
 {
     msg_.setText("Ohjeet asetuksille");
@@ -655,28 +711,18 @@ void MainWindow::on_settingsHelpButton_clicked()
     msg_.exec();
 }
 
-void MainWindow::fruitButton_clicked()
+// Apunappi ruudukon koon muuttamiselle. Avaa ruutuun ikkunan, jossa on ohjeet ruudukon koon säätelystä.
+void MainWindow::on_gridHelpButton_clicked()
 {
-    QPoint pos = QCursor::pos();
-    int posX = pos.x();
-    int posY = pos.y();
-    int columnPos = ((posX-LEFT_MARGIN)/SQUARE_SIDE)-1;
-    int rowPos = ((posY-TOP_MARGIN-(SQUARE_SIDE/2))/SQUARE_SIDE)-1;
-    if (columnPos > GRID_COL_SIZE_ || columnPos < 0) {
-        return;
-    } else if (rowPos > GRID_ROW_SIZE_ || rowPos < 0) {
-        return;
-    }
-
-    if (turn_ % 2 != 0) {
-        startPoint_[0] = columnPos;
-        startPoint_[1] = rowPos;
-        display_move_coordinates(columnPos, rowPos);
-    } else {
-        endPoint_[0] = columnPos;
-        endPoint_[1] = rowPos;
-        display_move_coordinates(columnPos, rowPos);
-    }
-    turn_ += 1;
-    return;
+    msg_.setText("Ohjeet ruudun muokkaamiseen");
+    msg_.setInformativeText("- Muokkaa peliruudukko eri kokoon syöttämällä tekstikenttiin haluamasi "
+                            "sarakkeiden ja rivien määrä \n"
+                            "- Toisen määristä on oltava vähintään 3, jotta peli pysyy toiminnallisena \n"
+                            "- Voit palauttaa vakioruudukon (6x6) jättämällä kentät tyhjiksi. \n"
+                            "- Suositeltu koko alle 10x10"
+                            "\n"
+                            "Ota ruudukko käyttöön painamalla 'Apply and reset' \n"
+                            "(vaatii nykyisen ruudukon nollaamisen)");
+    msg_.setIcon(QMessageBox::Information);
+    msg_.exec();
 }
