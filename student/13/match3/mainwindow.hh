@@ -45,6 +45,8 @@ private slots:
 
     void on_settingsHelpButton_clicked();
 
+    void fruitButton_clicked();
+
 private:
 
     Ui::MainWindow *ui;
@@ -74,6 +76,9 @@ private:
     const int BORDER_LEFT = 0;
     const int BORDER_RIGHT = SQUARE_SIDE * (GRID_COL_SIZE_+1);
 
+    int new_border_down = SQUARE_SIDE * (GRID_ROW_SIZE_+1);
+    int new_border_right = SQUARE_SIDE * (GRID_COL_SIZE_+1);
+
     // Constants for different fruits and the number of them
     // Add/remove fruits as you wish, or you can remove the whole enum type
     // Actually only the value NUMBER_OF_FRUITS is needed in the
@@ -92,61 +97,104 @@ private:
     std::uniform_int_distribution<int> distr_;
 
     std::vector<std::vector<Fruit_kind>> numbergrid_;
-    std::vector<std::vector<QGraphicsRectItem*>> grid_;
+    std::vector<std::vector<QPushButton*>> grid_;
+
+    //  - Setup-funktiot -
+
+    // Alustaa pelin: luo peliruudukon, tarkistaa asetukset nollaa pisteet, kellon ja tekstikentät
+    void init_game();
+
+    // Käy läpi pelissä olevat asetukset pelin alustuksessa
+    void checkSettings();
 
     // Writes the titles for the grid rows and columns
     void init_titles();
 
-    // Draws a single fruit near the right bottom corner of the grid
-    // At the moment, this function is not called in the template,
-    // but try to do so, if you want to use real fruits instead of rectangles.
-    void draw_fruit();
-
-    void init_game();
-
+    // Luo ruudukon väritettyjä ruuduille (ja buttoneille)
     void init_grids();
 
-    void swap_blocks();
+    // Maalaa ruudulla olevat painonappulat hedelmän värin mukaisesti. Parametri rndm on
+    // satunnaislukugeneraattorista saatu luku, jonka arvo muutetaan vastaamaan hedelmää
+    // header-tiedoston enum-rakenteella Fruit_kind.
+    QColor paint_button(int rndm);
 
-    bool check_matches();
-
-    void remove_matched_blocks(int col, int row, int counter, bool verticalmatch);
-
-    void update_screen();
-
-    void refill_blocks();
-
+    // Maalaaa ruudulla olevat ruudut hedelmän värin mukaisesti.
     QBrush paint_block(int rndm);
 
-    QPalette palette_;
-
-    QTimer* timer_;
-
-    QMessageBox msg_;
-
-    void checkSettings();
-
+    // Alustaa pistetaulukon
     void init_score();
 
+    // Alustaa pelin ajanoton
     void init_timer();
 
-    void lock_buttons(bool lockup);
-
-    int delay_ = 1000;
-
-    int rand_;
-
-    bool refill_ = false;
-
-    int points_ = 0;
-
-    void update_timer(int mins, int secs);
-
+    // QTimerin apufunktio, jolla pidetään kirjaa kuluneista sekunneista ja minuuteista
     void on_timeout();
 
-    void message(QString message);
+    // Päivittää ruudulla olevan kellon minuutit ja sekunnit
+    void update_timer(int mins, int secs);
 
+    // - Toiminnalliset funktiot -
+
+    // Päivittää peliruudukon värit muutosten (ruutujen siirtelyn, matchailun ja pudotusten) jälkeen
+    void update_screen();
+
+    // Vaihtaaa kahden ruudun paikkoja keskenään
+    void swap_blocks();
+
+    // Käy läpi ruudukon ja tarkistaa onko pysty- tai vaakasuuntaisia värisuoria
+    bool check_matches();
+
+    /* Poistaa matchatut ruudut pelistä. Parametrit:
+     * Parametrit:
+     * (1) col = tarkasteltava sarake
+     * (2) row = tarkasteltava rivi
+     * (3) counter = värisuoran pituuden "laskuri"
+     * (4) verticalmatch = onko kyseessä pystysuuntainen match (jos ei, match on vaakasuunnassa)
+    */
+    void remove_matched_blocks(int col, int row, int counter, bool verticalmatch);
+
+    // Generoi peliruudukon ylälaitaan uusia hedelmiä tyhjien kenttien kohdalle.
+    void refill_blocks();
+
+    // - Apufunktiot ja muuttujat -
+
+    // Lukitsee/avaa pelissä käytettävät napit pelaajalta. Parametri lockup voidaan päättää
+    // olevan true(lukitse)/false(avaa) kutsuvan funktion mukaisesti.
+    void lock_buttons(bool lockup);
+
+    void display_move_coordinates(int x, int y);
+
+    // Luo pelaajalle ilmoituksen (viesti-ikkunan) pelin lopussa. Parametri message on ilmoituksen "aihe"
+    // eli ikkunan ilmoitettava aihe (Game over, voitit pelin, ...)
+    void send_message(QString message);
+
+    // Tarkistaa onko pelaaja voittanut pelin eli kaikki ruudukon kohdat ovat tyhjiä.
     bool check_win();
+
+    // Pelissä käytettävä aikaviive, jota käytetään ennen ruutujen pudottelua pelin seuraamisen selkeyttämiseksi
+    int delay_ = 1000;
+
+    // Totuusarvo halutaanko pelin täydentävän ruudukon ylälaidan tyhjiä ruutuja. Jos arvo on false, funktiota
+    // refill_blocks ei kutsuta.
+    bool refill_ = false;
+
+    // Pelissä kerättävät pisteet
+    int points_ = 0;
+
+    int turn_ = 1;
+
+    std::vector<int> startPoint_ = {-1,-1};
+    std::vector<int> endPoint_ = {-1,-1};
+
+    // Kellotaulun, pistetaulun ja painonappien maalaamiseen käytettävä väripaletti. Napeille etsitään
+    // sopiva väri paint_button -funktiossa
+    QPalette palette_;
+
+    // Pelissä käytettävä widget ajanotolle
+    QTimer* timer_;
+
+    // Ilmoituksia varten käytettävä ikkunawidget, joka suoritetaan funktiossa send_message.
+    QMessageBox msg_;
 
 };
 #endif // MAINWINDOW_HH

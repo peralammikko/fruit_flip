@@ -1,0 +1,87 @@
+Ohjeet fruit_flip -ohjelmalle:
+
+fruit_flip on peli, jossa tarkoituksena on yhdistellä värillisiä ruutuja eli hedelmiä.
+Pelissä pelaaja voi liikutella ruutuja ja siten luoda kolmen tai useamman samanvärisen ruudun suoria
+poistaakseen ne peliruudukosta. Pelin ideana on, että ruudukko on sattumanvaraisesti generoitu, jolloin haasteena
+on liikutella ruutuja "matchien" eli värisuorien maksimoimiseksi. Matchit voivat olla pystysuoria
+(3+ samanväristä ruutua päällekäin) tai vaakasuoria (3+ samanväristä ruutua vierekkäin). Kun ruudukko on tyhjä,
+pelaaja on voittanut pelin.
+
+ - 1. IKKUNA JA PELIRUUTU -
+Peli käynnistyy erilliseen ikkunaan, jossa keskeisenä elementtinä on värikäs peliruudukko. Ruudukko koostuu "hedelmistä"
+eli värillisistä ruuduista, joita pelaajan on tarkoitus yhdistellä. Pelin toiminnallisuus kuvataan tarkemmin kappaleessa 2.
+Ruudukon vasemmasta ja ylemmästä laidasta löytyvät ruudukon koordinaatit, joita pelaaja tarvitsee pelatakseen.
+Ikkunan ylälaidasta löytyvät pistetaulu ("Blocks destroyed") ja peliaika ("Time"). Oikeassa ylälaidassa on painike "Close",
+joka sulkee pelin.
+
+Ruudukon oikealla puolella ovat pelaamiseen liittyvät toiminnot: "Select two blocks" -laatikossa on pelaajan syötteitä
+varten kaksi kirjoituskenttää ja painike "Move" laattojen liikuttamisen vahvistamiseksi. Laatikon vierellä on ? -nappi, jota
+painamalla pelaaja saa lyhyet ohjeet pelin toiminnasta.
+
+Alemmassa "Settings" laatikosta löytyvät pelin asetukset, joita kuvaillaan lisää kappaleessa 3. Laatikon vieressä
+on myös "?" -nappi, jota painamalla pelaaja saa nopeat selitykset asetuksista.
+
+Oikeassa alalaidassa on laatikko "Grid size", jossa on kaksi tyhjää syötekenttää ja "Apply and reset" -nappi uutta
+alustamista varten. Ominaisuudesta on kerrottu lisää kappaleessa 3.
+
+Peliruudukon alapuolella on nappi "Reset game", johon ensimmäisen siirron jälkeen vaihtuu tekstiksi "End game".
+Napilla voi siis alustaa pelilaudan ennen ensimmäistä siirtoa tai myöhemmin lopettaa keskeneräisen pelin.
+
+ - 2. PELIN TOIMINTA -
+
+LIIKUTTELU:
+Pelaaja syöttää oikeassa laidassa oleviin "Start" ja "End" -nimisiin syötekenttiin koordinaatit siirrettäville
+vierekkäisille laatikoille. Pelissä on sallittua siirtää vain vierekkäisiä ruutuja neljässä pääsuunnassa (ylös, alas,
+vasen, oikea). Laatikkojen koordinaatit syötetään tekstikenttiin X-Y -koordinaattien muodossa: ensin vaakarivin kirjain ja
+sen jälkeen pystyrivin kirjain. Oikeanlainen syöte olisi siis esimerkiksi "ab" ja "aa" (ilman lainausmerkkejä).
+Tällöin ruudukon sarakkeella A rivillä B oleva ruutu vaihtaisi paikkaa sarakkeella A rivillä A olevan ruudun kanssa.
+
+VÄRISUORAT JA PISTEYTYS:
+Pelaajan tarkoitus on ruutujen järjestystä manipuloimalla luoda värisuoria, jotka koostuvat vähintään kolmesta samanvärisestä
+ruudusta peräkkäin. Suorat eli matchit voivat kulkea ylhäältä alas sekä vasemmalta oikealle ilman mutkia. Kun pelaaja luo värisuoran,
+suoran muodostavat ruudut poistetaan pelistä, jolloin suoran päällä olevat ruudut tippuvat alaspäin. Jokaisesta poistetusta ruudusta
+pelaaja saa myös pisteen. Peli jatkuu niin kauan, kunnes pelilauta on täysin tyhjä, jolloin pelaaja on voittanut pelin. Mikäli
+pelaajalta jää ruutuja yli, joita ei pysty enää yhdistämään, on peli aloitettava alusta. Tällöin pelaaja voi painaa nappia "End game",
+jolloin peli päättyy.
+
+PELIN PÄÄTTYMINEN:
+Pelin päättyessä pelaajalle aukeaa ikkuna, joka kertoo onko peli voitettu vai jätetty kesken eli "hävitty". Ikkunassa kerrotaan myös
+pelaajan pisteet pelin päättyessä. Ikkunan sulkemisen jälkeen pelin siirtelykontrollit on lukittu, jolloin pelaaja ei pysty jatkamaan
+vaan on aloitettava alusta. Tämä tapahtuu painamalla vasemmassa alalaidassa olevaa nappia, jossa lukee nyt "Play again?".
+Tällöin ohjelma nollaa ja luo uuden ruudukon, jonka jälkeen kontrollit vapautuvat jälleen ja uusi peli voi alkaa.
+
+ - 3. LISÄOMINAISUUDET -
+PELIRUUDUKON TÄYTTÖ:
+Peliä on mahdollista pitkittää asetuksella "Infinite mode", joka muuttaa pelin luonnetta huomattavasti. Infinite modessa peliruudukon
+ylälaitaan syntyviin tyhjiin ruutuihin tiputetaan aina uusia hedelmiä, jolloin peliruudukko pysyy aina täynnä. Jatkuvan pelimuodon voi
+ottaa käyttöön milloin vain asetuksista, jolloin seuraavan siirron jälkeen uusia hedelmiä alkaa tippua. Samoin infinite moden voi ottaa
+pois milloin haluaa. Jatkuvassa pelimuodossa peliä ei luonnollisesti voi koskaan voittaa, jolloin pelin päättyminen tapahtuu
+keskeyttämällä peli tai poistamalla jatkuva pelimuoto käytöstä ja pelaamalla loppuun.
+
+VIIVEEN POISTO:
+Värisuoran jälkeen tippuviin palikkoihin on lisätty oletusominaisuutena yhden (1) sekunnin viive pelin seuraamisen helpottamiseksi.
+Viive on mahdollista poistaa asetuksista kohdasta "Reflex mode", joka on pelin käynnistyessä oletusarvona päällä. Asetusta voi muuttaa
+pelin aikana halutessaan milloin vain eikä sen muuttaminen tarvitse uudelleenkäynnistystä tai alustusta.
+
+PELIRUUDUKON KOKO:
+Pelaaja voi halutessaan muuttaa peliruudukon kokoa toivomaansa kokoon. Oikeassa alalaidassa olevaan "Grid size" tekstikenttiin pelaajan
+on mahdollista syöttää toivottu koko muodossa [sarakkeet] ja [rivit] ilman sulkeita. Pelilauta on tämän jälkeen alustettava uudelleen,
+joka tapahtuu painamalla alla olevaa nappia "Apply and reset". Tällöin ohjelma arpoo uuden peliruudukon pelaajan toivomissa mitoissa.
+
+AJANOTTO & PISTEYTYS:
+Peli-ikkuna sisältää myös kellon, josta pelaajan on mahdollista nähdä kuinka paljon peliin on käytetty aikaa. Pelin kello alkaa
+ensimmäisestä siirrosta (ensimmäinen "Move" napin klikkaus) ja päättyy, kun peli on voitettu tai "End game" nappia painettu. Pelin
+alustuksessa kello ja pistetaulu nollataan joka kerta.
+Pelaajan on myös mahdollista nähdä pisteensä pelin aikana vasemmassa ylälaidassa sijaitsevasta pistetaulusta "Blocks destroyed", joka
+ilmaisee poistettujen ruutujen määrän.
+
+USEIDEN RUUTUJEN POISTO:
+Pelissä on mahdollista tehdä myös kolmea ruutua pidempiä värisuoria. Pelaajan on tällöin mahdollista poistaa myös neljä tai viisi ruutua
+kerrallaan luomalla niistä sopivan värisuoran.
+
+PELIN NOLLAUS / RESET:
+Halutessaan pelaaja voi nollata ja arpoa itselleen uuden peliruudukon painamalla vasemmassa alalaidassa olevaa nappia "Reset game".
+Tämä tuhoaa nykyisen peliruudukon ja luo uuden sen tilalle. Resetointi nollaa myös (edelliseen) peliin käytetyn ajan ja kertyneet pisteet
+sekä tyhjentää siirtelyyn käytettävät tekstikentät. Resetointi ei kuitenkaan poista esimerkiksi valittuja asetuksia tai muuta peliruudukon
+kokoa.
+

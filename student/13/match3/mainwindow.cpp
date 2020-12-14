@@ -40,15 +40,24 @@ MainWindow::MainWindow(QWidget *parent)
     ui->delayCheck->setChecked(true);
     init_game();
     connect(timer_, &QTimer::timeout, this, &MainWindow::on_timeout);
+    msg_.addButton(QMessageBox::Ok);
 
     // More code perhaps needed
+}
+
+MainWindow::~MainWindow()
+{
+    delete timer_;
+    grid_.clear();
+    numbergrid_.clear();
+    delete ui;
 }
 
 // Alustaa pelin: pelilauta, otsikot, asetukset, kello ja pistetaulu
 void MainWindow::init_game()
 {
-    ui->startPoint->clear();
-    ui->endPoint->clear();
+    ui->startPointLine->clear();
+    ui->endPointLine->clear();
     checkSettings();
     init_grids();
     init_titles();
@@ -56,9 +65,11 @@ void MainWindow::init_game()
     init_timer();
 }
 
-MainWindow::~MainWindow()
+// Tarkistetaan asetukset pelin alustusta varten.
+void MainWindow::checkSettings()
 {
-    delete ui;
+    on_delayCheck_stateChanged(ui->delayCheck->checkState());
+    on_refillCheck_stateChanged();
 }
 
 // Luo kirjaimet ja numerot ruudukkoa varten
@@ -86,34 +97,6 @@ void MainWindow::init_titles()
                            TOP_MARGIN + i * SQUARE_SIDE,
                            SQUARE_SIDE, SQUARE_SIDE);
     }
-
-}
-
-void MainWindow::draw_fruit()
-{
-    // Vector of fruits
-    const std::vector<std::string>
-            fruits = {"cherries", "strawberry", "orange", "pear", "apple",
-                      "bananas", "tomato", "grapes", "eggplant"};
-
-    // Defining where the images can be found and what kind of images they are
-    const std::string PREFIX(":/");
-    const std::string SUFFIX(".png");
-
-    // Converting image (png) to a pixmap
-    int i = 0; // try different values in 0 <= i < fruits.size()
-    std::string filename = PREFIX + fruits.at(i) + SUFFIX;
-    QPixmap image(QString::fromStdString(filename));
-
-    // Scaling the pixmap
-    image = image.scaled(SQUARE_SIDE, SQUARE_SIDE);
-
-    // Setting the pixmap for a new label
-    QLabel* label = new QLabel("test", this);
-    label->setGeometry(LEFT_MARGIN + COLUMNS * SQUARE_SIDE,
-                       TOP_MARGIN + ROWS * SQUARE_SIDE,
-                       SQUARE_SIDE, SQUARE_SIDE);
-    label->setPixmap(image);
 }
 
 /* Alustaa peliruudukon luomalla numeroruudukon (6x6) ja piirrettävän ruudunkon,
@@ -121,33 +104,157 @@ void MainWindow::draw_fruit()
 */
 void MainWindow::init_grids()
 {
+    qDebug() << "init grid begin";
     grid_.clear();
     numbergrid_.clear();
-    std::vector<QGraphicsRectItem*> tempvector = {};
-    vector<Fruit_kind> tempvec = {};
+    std::vector<QPushButton*> buttonVec = {};
+    vector<Fruit_kind> fruitVec = {};
     for (int i = 0; i < GRID_COL_SIZE_+1; i++) {
         for (int j = 0; j < GRID_ROW_SIZE_+1; j++) {
-            tempvector.push_back(rect_);
+            QPushButton* newButton = new QPushButton;
+            buttonVec.push_back(newButton);
+
             int rndm = distr_(randomEng_);
             Fruit_kind fruit = static_cast<Fruit_kind>(rndm);
-            tempvec.push_back(fruit);
+            fruitVec.push_back(fruit);
         }
-        grid_.push_back(tempvector);
-        tempvector.clear();
+        grid_.push_back(buttonVec);
+        buttonVec.clear();
 
-        numbergrid_.push_back(tempvec);
-        tempvec.clear();
+        numbergrid_.push_back(fruitVec);
+        fruitVec.clear();
     }
+    qDebug() << "init grid end";
 
     // Jos alustetulta pelilaudalta löytyy matcheja, alustetaan pelilauta uudestaan
     if (check_matches() == true) {
         init_grids();
     }
+
     update_screen();
 }
 
+QColor MainWindow::paint_button(int rndm)
+{
+    QColor colr(Qt::black);
+    switch(rndm) {
+    case PLUM: colr = QColor(Qt::magenta); break;
+    case STRAWBERRY: colr = QColor(Qt::red); break;
+    case APPLE: colr = QColor(Qt::green); break;
+    case LEMON: colr = QColor(Qt::yellow); break;
+    case BLUEBERRY: colr = QColor(Qt::blue); break;
+    case ORANGE: colr = QColor (255,180,51); break;
+    case EMPTY: colr = QColor (225,225,225); break;
+    }
+    return colr;
+}
+
+// Etsitään laudalla olevat ruuduille (hedelmille) oikeanlaiset värit
+// käyttämällä headerissa määriteltyä numeroitua enum-rakennetta
+QBrush MainWindow::paint_block(int numbr)
+{
+    QBrush brush(Qt::black);
+    switch(numbr) {
+    case PLUM: brush.setColor(Qt::magenta); break;
+    case STRAWBERRY: brush.setColor(Qt::red); break;
+    case APPLE: brush.setColor(Qt::green); break;
+    case LEMON: brush.setColor(Qt::yellow); break;
+    case BLUEBERRY: brush.setColor(Qt::blue); break;
+    case ORANGE: brush.setColor(QColor (255,155,51)); break;
+    case EMPTY: brush.setColor(QColor (225,225,225)); break;
+    }
+    return brush;
+}
+
+// Alustetaan pistelaskuri (nollataan pisteet ja taulu).
+void MainWindow::init_score()
+{
+    palette_.setColor(QPalette::Background, Qt::black);
+    ui->lcdNumberScore->setPalette(palette_);
+    ui->lcdNumberScore->setAutoFillBackground(true);
+    points_ = 0;
+    ui->lcdNumberScore->display(0);
+}
+
+// Alustetaan peli-ikkunan kello
+void MainWindow::init_timer()
+{
+    timer_ = new QTimer;
+    timer_->setInterval(1000);
+    palette_.setColor(QPalette::Background, Qt::black);
+    ui->lcdNumberMins->setPalette(palette_);
+    ui->lcdNumberMins->setAutoFillBackground(true);
+
+    ui->lcdNumberSecs->setPalette(palette_);
+    ui->lcdNumberSecs->setAutoFillBackground(true);
+}
+
+// Sekuntikellon toiminnallisuus, johon timer yhdistetään ikkunan auetessa
+void MainWindow::on_timeout()
+{
+    int mins = ui->lcdNumberMins->intValue();
+    int secs = ui->lcdNumberSecs->intValue();
+
+    if (secs == 59) {
+        update_timer(mins+1, secs = 0);
+    } else {
+        update_timer(mins, secs+1);
+    }
+}
+
+// Päivitetään ruudulla olevan kellon minuutit ja sekunnit
+void MainWindow::update_timer(int mins, int secs)
+{
+    ui->lcdNumberMins->display(mins);
+    ui->lcdNumberSecs->display(secs);
+}
+
+// Päivittää kaikki pelilaudalla olevat ruudut oikeanvärisiksi.
+// Tyhjät ruudut väritetään backgroundColor -värillä.
+void MainWindow::update_screen()
+{
+    qDebug() << "Updating begin";
+    scene_->clear();
+    for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
+        qDebug() << "col "<< col << " updated";
+        for (int row = 0; row < GRID_ROW_SIZE_+1; row++) {
+            Fruit_kind fruitInGrid = numbergrid_.at(col).at(row);
+            QPushButton* fruitButton = new QPushButton;
+            connect(fruitButton, &QPushButton::clicked, this, &MainWindow::fruitButton_clicked);
+
+            QPalette pal = fruitButton->palette();
+            pal.setColor(QPalette::Button, paint_button(fruitInGrid));
+            fruitButton->setPalette(pal);
+
+            fruitButton->setGeometry(col*SQUARE_SIDE, row*SQUARE_SIDE, SQUARE_SIDE, SQUARE_SIDE);
+            scene_->addWidget(fruitButton);
+
+            /*
+            QPen blackPen(Qt::black);
+            QColor backGroundColor(225, 225, 225);
+
+            if (fruitInGrid == EMPTY) {
+
+                rect_ = scene_->addRect(i*SQUARE_SIDE, j*SQUARE_SIDE, SQUARE_SIDE, SQUARE_SIDE, blackPen, backGroundColor);
+
+            } else {
+
+
+                QBrush colorBrush = paint_block(fruitInGrid);
+                rect_ = scene_->addRect(i*SQUARE_SIDE,j*SQUARE_SIDE,SQUARE_SIDE,SQUARE_SIDE, blackPen, colorBrush);
+
+            }
+            */
+        }
+    }
+    qDebug() << "Screen updated";
+}
+
+
 void MainWindow::swap_blocks()
 {
+    qDebug() << "swapping begin";
+    /*
     string alphabet = "abcdefghijklmnopqrstuvwxyz";
     string start = on_startPoint_editingFinished();
     string end = on_endPoint_editingFinished();
@@ -156,14 +263,19 @@ void MainWindow::swap_blocks()
     }
     int startX = alphabet.find(start.at(0)); int startY = alphabet.find(start.at(1));
     int endX = alphabet.find(end.at(0)); int endY = alphabet.find(end.at(1));
-    if (startX > GRID_COL_SIZE_ || startY > GRID_ROW_SIZE_) {
+    */
+    int startX = startPoint_.at(0); int startY = startPoint_.at(1);
+    int endX = endPoint_.at(0); int endY = endPoint_.at(1);
+
+    if (startX > GRID_COL_SIZE_ || startX < 0 || startY > GRID_ROW_SIZE_ || startY < 0) {
         return;
-    } else if (endX > GRID_COL_SIZE_ || endY > GRID_ROW_SIZE_) {
+    } else if (endX > GRID_COL_SIZE_ || endX < 0 || endY > GRID_ROW_SIZE_ || endX < 0) {
         return;
     }
 
-    int distance = abs(startX-endX + startY-endY);
-    if (distance != 1) {
+    int distanceX = abs(startX-endX);
+    int distanceY = abs(startY-endY);
+    if (distanceX > 1 && distanceY > 1) {
         return;
     }
 
@@ -172,10 +284,13 @@ void MainWindow::swap_blocks()
     numbergrid_.at(startX).at(startY) = numbergrid_.at(endX).at(endY);
     numbergrid_.at(endX).at(endY) = temp;
 
+    qDebug() << "Blocks swapped";
+
 }
 
 bool MainWindow::check_matches()
 {
+    qDebug() << "matching begin";
     // Pystysuuntaiset matchit
     Fruit_kind currentnum = EMPTY;
     bool matchFound = false;
@@ -262,11 +377,13 @@ bool MainWindow::check_matches()
      * syntynyt matcheja vai ei.
     */
     if (matchFound) {
+        qDebug() << "match found, rerolling";
         ui->lcdNumberScore->display(points_);
         update_screen();
         QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
         return true;
     }
+    qDebug() << "matching end";
     return false;
 }
 
@@ -277,11 +394,13 @@ void MainWindow::remove_matched_blocks(int col, int row, int counter, bool verti
         for (int j = 0; j < counter; j++) {
             numbergrid_.at(col).at(row+j) = EMPTY;
             points_ += 1;
+            qDebug() << "block removed at " << col << ": " << row+j;
         }
     } else {
         for (int j = 0; j < counter; j++) {
             numbergrid_.at(col+j).at(row) = EMPTY;
             points_ += 1;
+            qDebug() << "block removed at " << col+j << ": " << row;
         }
     }
 }
@@ -289,13 +408,14 @@ void MainWindow::remove_matched_blocks(int col, int row, int counter, bool verti
 
 void MainWindow::drop_blocks()
 {
+    qDebug() << "drop begin";
     // Pudottaa hedelmiä niin kauas kunnes ruutujen alta ei löydy enää tyhjiä
     while (true) {
         Fruit_kind currentFruit = EMPTY;
         Fruit_kind belowFruit = EMPTY;
         bool emptyBelow = false;
-        for (int col = 0; col < COLUMNS; col++) {
-            for (int row = GRID_COL_SIZE_-1; row >= 0; row--) {
+        for (int col = 0; col < GRID_COL_SIZE_+1; col++) {
+            for (int row = GRID_ROW_SIZE_-1; row >= 0; row--) {
                 currentFruit = numbergrid_.at(col).at(row);
                 belowFruit = numbergrid_.at(col).at(row+1);
 
@@ -316,32 +436,13 @@ void MainWindow::drop_blocks()
             if (refill_ == true) {
                 refill_blocks();
             }
-            check_matches();
             break;
         }
     }
+    check_matches();
+    qDebug() << "dropping end";
     update_screen();
     return;
-}
-
-// Päivittää kaikki pelilaudalla olevat ruudut oikeanvärisiksi.
-// Tyhjät ruudut väritetään backgroundColor -värillä.
-void MainWindow::update_screen()
-{
-    grid_.clear();
-    for (int i = 0; i < GRID_COL_SIZE_+1; i++) {
-        for (int j = 0; j < GRID_ROW_SIZE_+1; j++) {
-            Fruit_kind colornumber = numbergrid_.at(i).at(j);
-            QPen blackPen(Qt::black);
-            QColor backGroundColor(225, 225, 225);
-            if (colornumber == EMPTY) {
-                rect_ = scene_->addRect(i*SQUARE_SIDE, j*SQUARE_SIDE, SQUARE_SIDE, SQUARE_SIDE, blackPen, backGroundColor);
-            } else {
-                QBrush colorBrush = paint_block(colornumber);
-                rect_ = scene_->addRect(i*SQUARE_SIDE,j*SQUARE_SIDE,SQUARE_SIDE,SQUARE_SIDE, blackPen, colorBrush);
-            }
-        }
-    }
 }
 
 // Täytetään ruudukon ylin rivi uusilla, arvotuilla hedelmillä (mikäli ruutu on tyhjä).
@@ -359,90 +460,35 @@ void MainWindow::refill_blocks()
     QTimer::singleShot(delay_, this, SLOT(drop_blocks()));
 }
 
-// Etsitään laudalla olevat ruuduille (hedelmille) oikeanlaiset värit
-// käyttämällä headerissa määriteltyä numeroitua enum-rakennetta
-QBrush MainWindow::paint_block(int numbr)
-{
-    QBrush brush(Qt::black);
-    switch(numbr) {
-    case PLUM: brush.setColor(Qt::magenta); break;
-    case STRAWBERRY: brush.setColor(Qt::red); break;
-    case APPLE: brush.setColor(Qt::green); break;
-    case LEMON: brush.setColor(Qt::yellow); break;
-    case BLUEBERRY: brush.setColor(Qt::blue); break;
-    case ORANGE: brush.setColor(QColor (255,155,51)); break;
-    case EMPTY: brush.setColor(QColor (225,225,225)); break;
-    }
-    return brush;
-}
-
-// Tarkistetaan asetukset pelin alustusta varten.
-void MainWindow::checkSettings()
-{
-    on_delayCheck_stateChanged(ui->delayCheck->checkState());
-    on_refillCheck_stateChanged();
-}
-
-// Alustetaan pistelaskuri (nollataan pisteet ja taulu).
-void MainWindow::init_score()
-{
-    palette_.setColor(QPalette::Background, Qt::black);
-    ui->lcdNumberScore->setPalette(palette_);
-    ui->lcdNumberScore->setAutoFillBackground(true);
-    points_ = 0;
-    ui->lcdNumberScore->display(0);
-}
-
-// Alustetaan peli-ikkunan kello
-void MainWindow::init_timer()
-{
-    timer_ = new QTimer;
-    timer_->setInterval(1000);
-    palette_.setColor(QPalette::Background, Qt::black);
-    ui->lcdNumberMins->setPalette(palette_);
-    ui->lcdNumberMins->setAutoFillBackground(true);
-
-    ui->lcdNumberSecs->setPalette(palette_);
-    ui->lcdNumberSecs->setAutoFillBackground(true);
-}
-
-// Sekuntikellon toiminnallisuus, johon timer yhdistetään ikkunan auetessa
-void MainWindow::on_timeout()
-{
-    int mins = ui->lcdNumberMins->intValue();
-    int secs = ui->lcdNumberSecs->intValue();
-
-    if (secs == 59) {
-        update_timer(mins+1, secs = 0);
-    } else {
-        update_timer(mins, secs+1);
-    }
-}
-
-// Päivitetään ruudulla olevan kellon minuutit ja sekunnit
-void MainWindow::update_timer(int mins, int secs)
-{
-    ui->lcdNumberMins->display(mins);
-    ui->lcdNumberSecs->display(secs);
-}
-
 // Lukitaan/avataan syöteruudut ja liikkumisnappi.
 // Käytetään pelin resetoinnissa ja pelin loppuessa
 void MainWindow::lock_buttons(bool lockup)
 {
     if (lockup == true) {
-        ui->startPoint->setDisabled(true);
-        ui->endPoint->setDisabled(true);
+        ui->startPointLine->setDisabled(true);
+        ui->endPointLine->setDisabled(true);
         ui->moveButton->setDisabled(true);
     } else {
-        ui->startPoint->setDisabled(false);
-        ui->endPoint->setDisabled(false);
+        ui->startPointLine->setDisabled(false);
+        ui->endPointLine->setDisabled(false);
         ui->moveButton->setDisabled(false);
     }
 }
 
+void MainWindow::display_move_coordinates(int x, int y)
+{
+    string alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    QString currentColumn = QString(alphabet.at(x));
+    QString currentRow = QString(alphabet.at(y));
+    if (turn_ % 2 != 0) {
+        ui->startPointLine->setText(currentColumn+":"+currentRow);
+    } else {
+        ui->endPointLine->setText(currentColumn+":"+currentRow);
+    }
+}
+
 // Luodaan ikkuna, jossa kerrotaan pelin päättymisestä/voitosta (message) ja pelaajan lopulliset pisteet.
-void MainWindow::message(QString message)
+void MainWindow::send_message(QString message)
 {
     QString score = QString::number(points_);
     msg_.setText(message);
@@ -468,14 +514,14 @@ bool MainWindow::check_win()
 // Haetaan valitun lähtöruudun koordinaatit (2 kirjainta)
 string MainWindow::on_startPoint_editingFinished()
 {
-    string startPoint = ui->startPoint->text().toStdString();
+    string startPoint = ui->startPointLine->text().toStdString();
     return startPoint;
 }
 
 // Haetaan valitun pääteruudun koordinaatit
 string MainWindow::on_endPoint_editingFinished()
 {
-    string endPoint = ui->endPoint->text().toStdString();
+    string endPoint = ui->endPointLine->text().toStdString();
     return endPoint;
 }
 
@@ -503,12 +549,16 @@ void MainWindow::on_moveButton_clicked()
      * voi käynnistää uudestaan.
     */
     if (check_win() == true) {
-        message("A winner is you!");
+        send_message("A winner is you!");
         timer_->stop();
         ui->resetButton->setText("Play again?");
         lock_buttons(true);
         points_ = 0;
     }
+    startPoint_ = {-1, -1};
+    endPoint_ = {-1, -1};
+    ui->startPointLine->clear();
+    ui->endPointLine->clear();
     return;
 }
 
@@ -539,7 +589,7 @@ void MainWindow::on_resetButton_clicked()
     if (points_ > 0) {
         timer_->stop();
         lock_buttons(true);
-        message("Game over!");
+        send_message("Game over!");
         points_ = 0;
         ui->resetButton->setText("Play again?");
         return;
@@ -562,6 +612,13 @@ void MainWindow::on_gridSettingsButton_clicked()
         if (gridXint > 2 || gridYint > 2) {
             GRID_COL_SIZE_ = gridXint-1;
             GRID_ROW_SIZE_ = gridYint-1;
+            delete scene_;
+            scene_ = new QGraphicsScene(this);
+            ui->graphicsView->setGeometry(LEFT_MARGIN, TOP_MARGIN,
+                                          (SQUARE_SIDE*gridXint)+10, (SQUARE_SIDE*gridYint)+10);
+            ui->graphicsView->setScene(scene_);
+            scene_->setSceneRect(0, 0, SQUARE_SIDE*gridXint+2, SQUARE_SIDE*gridYint+2);
+            points_ = 0;
             on_resetButton_clicked();
             return;
         }
@@ -593,7 +650,33 @@ void MainWindow::on_settingsHelpButton_clicked()
                             "\n"
                             "Asetukset astuvat voimaan heti \n"
                             "(ei vaadi nollausta)");
-    msg_.addButton(QMessageBox::Ok);
+
     msg_.setIcon(QMessageBox::Information);
     msg_.exec();
+}
+
+void MainWindow::fruitButton_clicked()
+{
+    QPoint pos = QCursor::pos();
+    int posX = pos.x();
+    int posY = pos.y();
+    int columnPos = ((posX-LEFT_MARGIN)/SQUARE_SIDE)-1;
+    int rowPos = ((posY-TOP_MARGIN-(SQUARE_SIDE/2))/SQUARE_SIDE)-1;
+    if (columnPos > GRID_COL_SIZE_ || columnPos < 0) {
+        return;
+    } else if (rowPos > GRID_ROW_SIZE_ || rowPos < 0) {
+        return;
+    }
+
+    if (turn_ % 2 != 0) {
+        startPoint_[0] = columnPos;
+        startPoint_[1] = rowPos;
+        display_move_coordinates(columnPos, rowPos);
+    } else {
+        endPoint_[0] = columnPos;
+        endPoint_[1] = rowPos;
+        display_move_coordinates(columnPos, rowPos);
+    }
+    turn_ += 1;
+    return;
 }
