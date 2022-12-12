@@ -1,8 +1,0 @@
-#CSV-fields
-#<ID>;<Department>;<Time in service>;<Boss>
-
-Mikko;keittiö;5;juho
-ROny;keittiö;5;juho
-Sami;keittiö;5;juho
-Are;keittiö;5;juho
-Juho;mestari;10;
